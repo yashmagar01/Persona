@@ -123,27 +123,55 @@ const Chat = () => {
 
       setMessages(prev => [...prev, userMsg as Message]);
 
-      // Simulate AI response (in production, this would call an AI API)
-      const aiResponse = `This is a simulated response from ${conversation?.personalities.display_name}. In a production environment, this would connect to an AI service that responds in the personality's style.`;
+      // Call edge function to get AI response
+      const { data: aiData, error: aiError } = await supabase.functions.invoke(
+        'chat-with-personality',
+        {
+          body: {
+            conversationId,
+            message: userMessage
+          }
+        }
+      );
 
-      const { data: aiMsg, error: aiError } = await supabase
+      if (aiError) {
+        console.error('Edge function error:', aiError);
+        
+        // Check for specific error types
+        if (aiError.message?.includes('Rate limit') || aiError.message?.includes('429')) {
+          toast.error("Rate limit exceeded. Please wait a moment and try again.");
+        } else if (aiError.message?.includes('credits') || aiError.message?.includes('402')) {
+          toast.error("AI credits exhausted. Please add credits to continue.");
+        } else {
+          toast.error("Failed to get AI response. Please try again.");
+        }
+        
+        // Remove the user message if AI call failed
+        setMessages(prev => prev.filter(m => m.id !== userMsg.id));
+        return;
+      }
+
+      const assistantContent = aiData.message;
+
+      // Insert assistant message
+      const { data: aiMsg, error: insertError } = await supabase
         .from("messages")
         .insert([
           {
             conversation_id: conversationId,
             role: "assistant",
-            content: aiResponse,
+            content: assistantContent,
           }
         ])
         .select()
         .single();
 
-      if (aiError) throw aiError;
+      if (insertError) throw insertError;
 
       setMessages(prev => [...prev, aiMsg as Message]);
     } catch (error: any) {
+      console.error('Chat error:', error);
       toast.error("Failed to send message");
-      console.error(error);
     } finally {
       setIsLoading(false);
     }

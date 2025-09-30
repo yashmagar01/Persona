@@ -1,1 +1,4 @@
 project_id = "oqyqtfyeaxrtbqhdixni"
+
+[functions.chat-with-personality]
+verify_jwt = true
