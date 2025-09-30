@@ -1,0 +1,286 @@
+import { useEffect, useState, useRef } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Send, Loader2, User } from "lucide-react";
+import { toast } from "sonner";
+
+interface Message {
+  id: string;
+  role: "user" | "assistant" | "system";
+  content: string;
+  created_at: string;
+}
+
+interface Conversation {
+  id: string;
+  title: string;
+  personality_id: string;
+  personalities: {
+    display_name: string;
+    avatar_url: string | null;
+    era: string;
+    values_pillars: any;
+  };
+}
+
+const Chat = () => {
+  const { conversationId } = useParams();
+  const navigate = useNavigate();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [conversation, setConversation] = useState<Conversation | null>(null);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isFetchingMessages, setIsFetchingMessages] = useState(true);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (conversationId) {
+      fetchConversation();
+      fetchMessages();
+    }
+  }, [conversationId]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const fetchConversation = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("conversations")
+        .select(`
+          *,
+          personalities (
+            display_name,
+            avatar_url,
+            era,
+            values_pillars
+          )
+        `)
+        .eq("id", conversationId)
+        .single();
+
+      if (error) throw error;
+      setConversation(data);
+    } catch (error: any) {
+      toast.error("Failed to load conversation");
+      console.error(error);
+      navigate("/chatboard");
+    }
+  };
+
+  const fetchMessages = async () => {
+    setIsFetchingMessages(true);
+    try {
+      const { data, error } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("conversation_id", conversationId)
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+      setMessages((data || []) as Message[]);
+    } catch (error: any) {
+      toast.error("Failed to load messages");
+      console.error(error);
+    } finally {
+      setIsFetchingMessages(false);
+    }
+  };
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!input.trim() || !conversationId) return;
+
+    const userMessage = input.trim();
+    setInput("");
+    setIsLoading(true);
+
+    try {
+      // Insert user message
+      const { data: userMsg, error: userError } = await supabase
+        .from("messages")
+        .insert([
+          {
+            conversation_id: conversationId,
+            role: "user",
+            content: userMessage,
+          }
+        ])
+        .select()
+        .single();
+
+      if (userError) throw userError;
+
+      setMessages(prev => [...prev, userMsg as Message]);
+
+      // Simulate AI response (in production, this would call an AI API)
+      const aiResponse = `This is a simulated response from ${conversation?.personalities.display_name}. In a production environment, this would connect to an AI service that responds in the personality's style.`;
+
+      const { data: aiMsg, error: aiError } = await supabase
+        .from("messages")
+        .insert([
+          {
+            conversation_id: conversationId,
+            role: "assistant",
+            content: aiResponse,
+          }
+        ])
+        .select()
+        .single();
+
+      if (aiError) throw aiError;
+
+      setMessages(prev => [...prev, aiMsg as Message]);
+    } catch (error: any) {
+      toast.error("Failed to send message");
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (!conversation) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading conversation...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const personality = conversation.personalities;
+  const valuesPillars = Array.isArray(personality.values_pillars) 
+    ? personality.values_pillars.map(v => String(v))
+    : [];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted flex flex-col">
+      {/* Header */}
+      <header className="bg-card border-b border-border shadow-sm">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/chatboard")}>
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            
+            <div className="flex items-center gap-3 flex-1">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent overflow-hidden flex-shrink-0">
+                {personality.avatar_url ? (
+                  <img 
+                    src={personality.avatar_url} 
+                    alt={personality.display_name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <User className="w-6 h-6 text-white" />
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex-1">
+                <h1 className="text-xl font-bold text-foreground">
+                  {personality.display_name}
+                </h1>
+                <p className="text-sm text-muted-foreground">{personality.era}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Messages Area */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="container mx-auto px-4 py-6 max-w-4xl">
+          {/* Personality Info Card */}
+          <Card className="mb-6 p-6 bg-card/50 backdrop-blur-sm border-border">
+            <div className="flex flex-wrap gap-2 mb-2">
+              {valuesPillars.map((value, index) => (
+                <Badge key={index} variant="secondary">
+                  {value}
+                </Badge>
+              ))}
+            </div>
+            <p className="text-sm text-muted-foreground">
+              I'm here to share insights about my life, values, and the era I lived in. Ask me anything!
+            </p>
+          </Card>
+
+          {/* Messages */}
+          {isFetchingMessages ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">No messages yet. Start the conversation!</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                >
+                  <div
+                    className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                      message.role === "user"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-card border border-border text-card-foreground"
+                    }`}
+                  >
+                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                    <p className={`text-xs mt-2 ${
+                      message.role === "user" 
+                        ? "text-primary-foreground/70" 
+                        : "text-muted-foreground"
+                    }`}>
+                      {new Date(message.created_at).toLocaleTimeString()}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+      </div>
+
+      {/* Input Area */}
+      <div className="bg-card border-t border-border">
+        <div className="container mx-auto px-4 py-4 max-w-4xl">
+          <form onSubmit={handleSendMessage} className="flex gap-2">
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Type your message..."
+              disabled={isLoading}
+              className="flex-1"
+            />
+            <Button type="submit" disabled={isLoading || !input.trim()}>
+              {isLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
+            </Button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Chat;
