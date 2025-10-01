@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Navigation } from "./components/Navigation";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
+import Dashboard from "./pages/Dashboard";
 import Chatboard from "./pages/Chatboard";
 import Chat from "./pages/Chat";
 import Conversations from "./pages/Conversations";
@@ -23,6 +24,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/chatboard" element={<Chatboard />} />
           <Route path="/chat/:conversationId" element={<Chat />} />
           <Route path="/conversations" element={<Conversations />} />

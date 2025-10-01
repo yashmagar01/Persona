@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, ChevronDown, BookOpen, GraduationCap, Users, Building2, Megaphone, Mail, Home, LogIn, User } from "lucide-react";
+import { Menu, X, ChevronDown, LayoutDashboard, FileText, TrendingUp, User, Compass, Users, UserCircle, Award, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -31,25 +31,16 @@ export const Navigation = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
-  const departmentsItems = [
-    { icon: Building2, title: "Computer Engineering", description: "Cutting-edge tech education", href: "#" },
-    { icon: Building2, title: "Mechanical Engineering", description: "Innovation in mechanics", href: "#" },
-    { icon: Building2, title: "Civil Engineering", description: "Building the future", href: "#" },
-    { icon: Building2, title: "Electrical Engineering", description: "Power & electronics", href: "#" },
-  ];
-
   const academicsItems = [
-    { icon: BookOpen, title: "Curriculum", description: "Comprehensive course structure", href: "#" },
-    { icon: GraduationCap, title: "Faculty", description: "Expert teaching staff", href: "#" },
-    { icon: BookOpen, title: "Research", description: "Innovation & development", href: "#" },
-    { icon: GraduationCap, title: "Projects", description: "Student achievements", href: "#" },
+    { icon: Award, title: "Courses", description: "Browse available courses", href: "#" },
+    { icon: FileText, title: "Certifications", description: "Track your achievements", href: "#" },
+    { icon: TrendingUp, title: "Progress", description: "View your learning progress", href: "#" },
   ];
 
-  const studentItems = [
-    { icon: Users, title: "Clubs & Activities", description: "Extracurricular engagement", href: "/chatboard" },
-    { icon: Users, title: "Student Portal", description: "Access your resources", href: "#" },
-    { icon: Users, title: "Events", description: "Upcoming programs", href: "#" },
-    { icon: Users, title: "Historical Chat", description: "Learn from legends", href: "/chatboard" },
+  const opportunitiesItems = [
+    { icon: Briefcase, title: "Jobs", description: "Explore job opportunities", href: "#" },
+    { icon: Award, title: "Internships", description: "Find internships", href: "#" },
+    { icon: Users, title: "Networking", description: "Connect with professionals", href: "#" },
   ];
 
   return (
@@ -59,44 +50,65 @@ export const Navigation = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2 hover-scale">
             <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-              <GraduationCap className="w-5 h-5 text-white" />
+              <User className="w-5 h-5 text-white" />
             </div>
             <span className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-              Historical Chatboard
+              Persona Project
             </span>
           </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-1">
             <Link
-              to="/"
+              to="/dashboard"
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                isActive("/") ? "bg-accent text-accent-foreground" : "hover:bg-accent/50"
+                isActive("/dashboard") ? "bg-accent text-accent-foreground" : "hover:bg-accent/50"
               }`}
             >
-              <Home className="w-4 h-4 inline mr-2" />
-              Home
+              <LayoutDashboard className="w-4 h-4 inline mr-2" />
+              Dashboard
             </Link>
 
             <Link
-              to="/about"
+              to="/assessments"
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                isActive("/about") ? "bg-accent text-accent-foreground" : "hover:bg-accent/50"
+                isActive("/assessments") ? "bg-accent text-accent-foreground" : "hover:bg-accent/50"
               }`}
             >
-              About Us
+              <FileText className="w-4 h-4 inline mr-2" />
+              Assessments
             </Link>
 
-            {/* Departments Dropdown */}
+            <Link
+              to="/learning-path"
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                isActive("/learning-path") ? "bg-accent text-accent-foreground" : "hover:bg-accent/50"
+              }`}
+            >
+              <TrendingUp className="w-4 h-4 inline mr-2" />
+              Learning Path
+            </Link>
+
+            <Link
+              to="/skill-persona"
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                isActive("/skill-persona") ? "bg-accent text-accent-foreground" : "hover:bg-accent/50"
+              }`}
+            >
+              <UserCircle className="w-4 h-4 inline mr-2" />
+              Skill Persona
+            </Link>
+
+            {/* Academics Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="text-sm font-medium">
-                  Departments <ChevronDown className="ml-1 h-4 w-4" />
+                  Academics <ChevronDown className="ml-1 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-[600px] p-4 bg-background/95 backdrop-blur">
-                <div className="grid grid-cols-2 gap-3">
-                  {departmentsItems.map((item) => (
+              <DropdownMenuContent className="w-[500px] p-4 bg-background/95 backdrop-blur z-50">
+                <div className="grid grid-cols-1 gap-3">
+                  {academicsItems.map((item) => (
                     <Link
                       key={item.title}
                       to={item.href}
@@ -115,16 +127,16 @@ export const Navigation = () => {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Academics Dropdown */}
+            {/* Opportunities Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="text-sm font-medium">
-                  Academics <ChevronDown className="ml-1 h-4 w-4" />
+                  Opportunities <ChevronDown className="ml-1 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-[600px] p-4 bg-background/95 backdrop-blur">
-                <div className="grid grid-cols-2 gap-3">
-                  {academicsItems.map((item) => (
+              <DropdownMenuContent className="w-[500px] p-4 bg-background/95 backdrop-blur z-50">
+                <div className="grid grid-cols-1 gap-3">
+                  {opportunitiesItems.map((item) => (
                     <Link
                       key={item.title}
                       to={item.href}
@@ -143,52 +155,24 @@ export const Navigation = () => {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Student Corner Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="text-sm font-medium">
-                  Student Corner <ChevronDown className="ml-1 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-[600px] p-4 bg-background/95 backdrop-blur">
-                <div className="grid grid-cols-2 gap-3">
-                  {studentItems.map((item) => (
-                    <Link
-                      key={item.title}
-                      to={item.href}
-                      className="flex items-start space-x-3 p-3 rounded-lg hover:bg-accent/50 transition-colors group"
-                    >
-                      <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
-                        <item.icon className="w-5 h-5 text-accent-foreground" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-sm mb-0.5">{item.title}</p>
-                        <p className="text-xs text-muted-foreground">{item.description}</p>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
             <Link
-              to="/notices"
+              to="/career-guide"
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                isActive("/notices") ? "bg-accent text-accent-foreground" : "hover:bg-accent/50"
+                isActive("/career-guide") ? "bg-accent text-accent-foreground" : "hover:bg-accent/50"
               }`}
             >
-              <Megaphone className="w-4 h-4 inline mr-2" />
-              Notices
+              <Compass className="w-4 h-4 inline mr-2" />
+              Career Guide
             </Link>
 
             <Link
-              to="/contact"
+              to="/community"
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                isActive("/contact") ? "bg-accent text-accent-foreground" : "hover:bg-accent/50"
+                isActive("/community") ? "bg-accent text-accent-foreground" : "hover:bg-accent/50"
               }`}
             >
-              <Mail className="w-4 h-4 inline mr-2" />
-              Contact Us
+              <Users className="w-4 h-4 inline mr-2" />
+              Community
             </Link>
           </div>
 
@@ -198,16 +182,16 @@ export const Navigation = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm">
-                    <User className="w-4 h-4 mr-2" />
+                    <UserCircle className="w-4 h-4 mr-2" />
                     Profile
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-background/95 backdrop-blur">
+                <DropdownMenuContent align="end" className="bg-background/95 backdrop-blur z-50">
                   <DropdownMenuItem asChild>
-                    <Link to="/conversations">My Conversations</Link>
+                    <Link to="/dashboard">Dashboard</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/chatboard">Chatboard</Link>
+                    <Link to="/skill-persona">My Persona</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleSignOut}>
                     Sign Out
@@ -217,18 +201,10 @@ export const Navigation = () => {
             ) : (
               <Button variant="ghost" size="sm" asChild>
                 <Link to="/auth">
-                  <LogIn className="w-4 h-4 mr-2" />
                   Sign In
                 </Link>
               </Button>
             )}
-
-            <Button variant="accent" size="sm" asChild className="bg-[#c8ff3d] text-[#0f172a] hover:bg-[#b8ef2d]">
-              <Link to="/chatboard">
-                <GraduationCap className="w-4 h-4 mr-2" />
-                Start Learning
-              </Link>
-            </Button>
           </div>
 
           {/* Mobile Menu Button */}
@@ -245,50 +221,57 @@ export const Navigation = () => {
         {mobileMenuOpen && (
           <div className="md:hidden py-4 space-y-2 animate-fade-in">
             <Link
-              to="/"
+              to="/dashboard"
               className="block px-4 py-2 rounded-lg hover:bg-accent/50 transition-colors"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Home
+              Dashboard
             </Link>
             <Link
-              to="/about"
+              to="/assessments"
               className="block px-4 py-2 rounded-lg hover:bg-accent/50 transition-colors"
               onClick={() => setMobileMenuOpen(false)}
             >
-              About Us
+              Assessments
             </Link>
             <Link
-              to="/chatboard"
+              to="/learning-path"
               className="block px-4 py-2 rounded-lg hover:bg-accent/50 transition-colors"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Chatboard
+              Learning Path
             </Link>
             <Link
-              to="/notices"
+              to="/skill-persona"
               className="block px-4 py-2 rounded-lg hover:bg-accent/50 transition-colors"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Notices
+              Skill Persona
             </Link>
             <Link
-              to="/contact"
+              to="/career-guide"
               className="block px-4 py-2 rounded-lg hover:bg-accent/50 transition-colors"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Contact Us
+              Career Guide
+            </Link>
+            <Link
+              to="/community"
+              className="block px-4 py-2 rounded-lg hover:bg-accent/50 transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Community
             </Link>
             
             <div className="pt-4 space-y-2 border-t border-border">
               {user ? (
                 <>
                   <Link
-                    to="/conversations"
+                    to="/dashboard"
                     className="block px-4 py-2 rounded-lg hover:bg-accent/50 transition-colors"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    My Conversations
+                    My Dashboard
                   </Link>
                   <button
                     onClick={() => {
@@ -309,12 +292,6 @@ export const Navigation = () => {
                   Sign In
                 </Link>
               )}
-              <Button variant="accent" className="w-full bg-[#c8ff3d] text-[#0f172a] hover:bg-[#b8ef2d]" asChild>
-                <Link to="/chatboard" onClick={() => setMobileMenuOpen(false)}>
-                  <GraduationCap className="w-4 h-4 mr-2" />
-                  Start Learning
-                </Link>
-              </Button>
             </div>
           </div>
         )}
