@@ -65,8 +65,11 @@ const Auth = () => {
       });
 
       if (error) {
+        console.error("Sign up error:", error);
         if (error.message.includes("already registered")) {
           toast.error("This email is already registered. Please sign in instead.");
+        } else if (error.message.includes("Email not confirmed")) {
+          toast.info("Please check your email and confirm your account before signing in.");
         } else {
           toast.error(error.message);
         }
@@ -74,6 +77,12 @@ const Auth = () => {
       }
 
       if (data.user) {
+        // Check if email confirmation is required
+        if (data.user.identities && data.user.identities.length === 0) {
+          toast.info("Please check your email to confirm your account!");
+          return;
+        }
+
         // Create profile
         const { error: profileError } = await supabase
           .from("profiles")
@@ -87,6 +96,7 @@ const Auth = () => {
 
         if (profileError) {
           console.error("Profile creation error:", profileError);
+          // Don't block if profile creation fails, user can still proceed
         }
 
         toast.success("Account created successfully!");
@@ -116,8 +126,13 @@ const Auth = () => {
       });
 
       if (error) {
+        console.error("Sign in error:", error);
         if (error.message.includes("Invalid login credentials")) {
           toast.error("Invalid email or password. Please try again.");
+        } else if (error.message.includes("Email not confirmed")) {
+          toast.error("Please confirm your email before signing in. Check your inbox!");
+        } else if (error.message.includes("User not found")) {
+          toast.error("No account found with this email. Please sign up first.");
         } else {
           toast.error(error.message);
         }
