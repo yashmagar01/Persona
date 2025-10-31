@@ -1,0 +1,21 @@
+{
+  "deno.enable": false,
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.validate.enable": true,
+  "files.exclude": {
+    "**/.git": true,
+    "**/node_modules": true,
+    "**/.DS_Store": true
+  },
+  // Exclude Supabase edge functions from TypeScript validation
+  // These are Deno files, not Node.js/TypeScript files
+  "typescript.exclude": [
+    "**/supabase/functions/**/*"
+  ],
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
+}
