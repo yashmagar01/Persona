@@ -91,9 +91,23 @@ const Chatboard = () => {
   };
 
   const handleStartChat = async (personalityId: string, displayName: string) => {
+    // Allow guest users - navigate to chat in guest mode
     if (!user) {
-      toast.error("Please sign in to start a conversation");
-      navigate("/auth");
+      // Create a guest conversation ID
+      const guestConversationId = `guest-${personalityId}-${Date.now()}`;
+      
+      // Store guest conversation info in localStorage
+      localStorage.setItem(`guest-conversation-${guestConversationId}`, JSON.stringify({
+        id: guestConversationId,
+        personality_id: personalityId,
+        display_name: displayName,
+        title: `Chat with ${displayName}`,
+        created_at: new Date().toISOString(),
+        messages: []
+      }));
+      
+      toast.success(`Starting guest chat with ${displayName}`);
+      navigate(`/chat/${guestConversationId}`);
       return;
     }
 

@@ -38,6 +38,7 @@ const Chat = () => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingMessages, setIsFetchingMessages] = useState(true);
+  const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -57,6 +58,33 @@ const Chat = () => {
 
   const fetchConversation = async () => {
     try {
+      // Check if this is a guest conversation
+      if (conversationId?.startsWith('guest-')) {
+        const guestData = localStorage.getItem(`guest-conversation-${conversationId}`);
+        if (guestData) {
+          const guestConv = JSON.parse(guestData);
+          
+          // Fetch personality data from database
+          const { data: personality, error: personalityError } = await supabase
+            .from("personalities")
+            .select("*")
+            .eq("id", guestConv.personality_id)
+            .single();
+
+          if (personalityError) throw personalityError;
+
+          // Format to match expected structure
+          setConversation({
+            id: guestConv.id,
+            title: guestConv.title,
+            personality_id: guestConv.personality_id,
+            personalities: personality
+          } as any);
+          return;
+        }
+      }
+
+      // Regular authenticated user conversation
       const { data, error } = await supabase
         .from("conversations")
         .select(`
@@ -85,6 +113,17 @@ const Chat = () => {
   const fetchMessages = async () => {
     setIsFetchingMessages(true);
     try {
+      // Handle guest conversations
+      if (conversationId?.startsWith('guest-')) {
+        const guestData = localStorage.getItem(`guest-conversation-${conversationId}`);
+        if (guestData) {
+          const guestConv = JSON.parse(guestData);
+          setMessages(guestConv.messages || []);
+        }
+        return;
+      }
+
+      // Regular authenticated user messages
       const { data, error } = await supabase
         .from("messages")
         .select("*")
@@ -109,31 +148,48 @@ const Chat = () => {
     const userMessage = input.trim();
     setInput("");
     setIsLoading(true);
+    setIsTyping(true);
 
     try {
       // Check if Gemini is configured
       if (!isGeminiConfigured()) {
         toast.error("Gemini API not configured. Please add VITE_GEMINI_API_KEY to your .env file.");
         setIsLoading(false);
+        setIsTyping(false);
         return;
       }
 
-      // Insert user message
-      const { data: userMsg, error: userError } = await supabase
-        .from("messages")
-        .insert([
-          {
-            conversation_id: conversationId,
-            role: "user",
-            content: userMessage,
-          }
-        ])
-        .select()
-        .single();
+      let userMsg: Message;
 
-      if (userError) throw userError;
+      // Handle guest vs authenticated user
+      if (conversationId.startsWith('guest-')) {
+        // Guest user - store in localStorage
+        userMsg = {
+          id: `msg-${Date.now()}`,
+          role: "user",
+          content: userMessage,
+          created_at: new Date().toISOString()
+        } as Message;
 
-      setMessages(prev => [...prev, userMsg as Message]);
+        setMessages(prev => [...prev, userMsg]);
+      } else {
+        // Authenticated user - store in database
+        const { data: dbUserMsg, error: userError } = await supabase
+          .from("messages")
+          .insert([
+            {
+              conversation_id: conversationId,
+              role: "user",
+              content: userMessage,
+            }
+          ])
+          .select()
+          .single();
+
+        if (userError) throw userError;
+        userMsg = dbUserMsg as Message;
+        setMessages(prev => [...prev, userMsg]);
+      }
 
       // Get conversation history for context (last 10 messages)
       const conversationHistory = messages.slice(-10).map(msg => ({
@@ -148,25 +204,52 @@ const Chat = () => {
         userMessage
       );
 
-      // Insert assistant message
-      const { data: aiMsg, error: insertError } = await supabase
-        .from("messages")
-        .insert([
-          {
-            conversation_id: conversationId,
-            role: "assistant",
-            content: assistantContent,
-          }
-        ])
-        .select()
-        .single();
+      let aiMsg: Message;
 
-      if (insertError) throw insertError;
+      // Handle guest vs authenticated user
+      if (conversationId.startsWith('guest-')) {
+        // Guest user - store in localStorage
+        aiMsg = {
+          id: `msg-${Date.now()}`,
+          role: "assistant",
+          content: assistantContent,
+          created_at: new Date().toISOString()
+        } as Message;
 
-      setMessages(prev => [...prev, aiMsg as Message]);
+        const updatedMessages = [...messages, userMsg, aiMsg];
+        setMessages(updatedMessages);
+
+        // Update localStorage
+        const guestData = localStorage.getItem(`guest-conversation-${conversationId}`);
+        if (guestData) {
+          const guestConv = JSON.parse(guestData);
+          guestConv.messages = updatedMessages;
+          localStorage.setItem(`guest-conversation-${conversationId}`, JSON.stringify(guestConv));
+        }
+      } else {
+        // Authenticated user - store in database
+        const { data: dbAiMsg, error: insertError } = await supabase
+          .from("messages")
+          .insert([
+            {
+              conversation_id: conversationId,
+              role: "assistant",
+              content: assistantContent,
+            }
+          ])
+          .select()
+          .single();
+
+        if (insertError) throw insertError;
+        aiMsg = dbAiMsg as Message;
+        setMessages(prev => [...prev, aiMsg]);
+      }
+
+      setIsTyping(false);
       toast.success(`${conversation.personalities.display_name} replied!`);
     } catch (error: any) {
       console.error('Chat error:', error);
+      setIsTyping(false);
       
       // Show specific error messages
       if (error.message?.includes('Rate limit')) {
@@ -235,6 +318,26 @@ const Chat = () => {
         </div>
       </header>
 
+      {/* Guest User Banner */}
+      {conversationId?.startsWith('guest-') && (
+        <div className="bg-gradient-to-r from-primary/10 to-accent/10 border-b border-border">
+          <div className="container mx-auto px-4 py-3 max-w-4xl">
+            <div className="flex items-center justify-between gap-4">
+              <p className="text-sm text-foreground">
+                ✨ You're chatting as a <span className="font-semibold">guest</span>. Sign up to save your conversations!
+              </p>
+              <Button 
+                size="sm" 
+                onClick={() => navigate("/auth")}
+                className="shrink-0"
+              >
+                Sign Up Free
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto">
         <div className="container mx-auto px-4 py-6 max-w-4xl">
@@ -286,6 +389,24 @@ const Chat = () => {
                   </div>
                 </div>
               ))}
+              
+              {/* Typing Indicator */}
+              {isTyping && (
+                <div className="flex justify-start">
+                  <div className="max-w-[80%] rounded-2xl px-4 py-3 bg-card border border-border">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">
+                        {personality.display_name} is typing
+                      </span>
+                      <div className="flex gap-1">
+                        <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                        <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                        <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
           <div ref={messagesEndRef} />
