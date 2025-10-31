@@ -8,6 +8,7 @@ import Auth from "./pages/Auth";
 import Chatboard from "./pages/Chatboard";
 import Chat from "./pages/Chat";
 import Conversations from "./pages/Conversations";
+import SeedPersonalities from "./pages/SeedPersonalities";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/chatboard" element={<Chatboard />} />
           <Route path="/chat/:conversationId" element={<Chat />} />
           <Route path="/conversations" element={<Conversations />} />
+          <Route path="/seed" element={<SeedPersonalities />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
