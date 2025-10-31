@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Send, Loader2, User } from "lucide-react";
 import { toast } from "sonner";
+import { generatePersonalityResponse, isGeminiConfigured } from "@/lib/gemini";
 
 interface Message {
   id: string;
@@ -23,6 +24,8 @@ interface Conversation {
     display_name: string;
     avatar_url: string | null;
     era: string;
+    speaking_style: string;
+    short_bio: string;
     values_pillars: any;
   };
 }
@@ -62,6 +65,8 @@ const Chat = () => {
             display_name,
             avatar_url,
             era,
+            speaking_style,
+            short_bio,
             values_pillars
           )
         `)
@@ -99,13 +104,20 @@ const Chat = () => {
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!input.trim() || !conversationId) return;
+    if (!input.trim() || !conversationId || !conversation) return;
 
     const userMessage = input.trim();
     setInput("");
     setIsLoading(true);
 
     try {
+      // Check if Gemini is configured
+      if (!isGeminiConfigured()) {
+        toast.error("Gemini API not configured. Please add VITE_GEMINI_API_KEY to your .env file.");
+        setIsLoading(false);
+        return;
+      }
+
       // Insert user message
       const { data: userMsg, error: userError } = await supabase
         .from("messages")
@@ -123,35 +135,18 @@ const Chat = () => {
 
       setMessages(prev => [...prev, userMsg as Message]);
 
-      // Call edge function to get AI response
-      const { data: aiData, error: aiError } = await supabase.functions.invoke(
-        'chat-with-personality',
-        {
-          body: {
-            conversationId,
-            message: userMessage
-          }
-        }
+      // Get conversation history for context (last 10 messages)
+      const conversationHistory = messages.slice(-10).map(msg => ({
+        role: msg.role as 'user' | 'assistant' | 'system',
+        content: msg.content
+      }));
+
+      // Generate AI response using Gemini
+      const assistantContent = await generatePersonalityResponse(
+        conversation.personalities,
+        conversationHistory,
+        userMessage
       );
-
-      if (aiError) {
-        console.error('Edge function error:', aiError);
-        
-        // Check for specific error types
-        if (aiError.message?.includes('Rate limit') || aiError.message?.includes('429')) {
-          toast.error("Rate limit exceeded. Please wait a moment and try again.");
-        } else if (aiError.message?.includes('credits') || aiError.message?.includes('402')) {
-          toast.error("AI credits exhausted. Please add credits to continue.");
-        } else {
-          toast.error("Failed to get AI response. Please try again.");
-        }
-        
-        // Remove the user message if AI call failed
-        setMessages(prev => prev.filter(m => m.id !== userMsg.id));
-        return;
-      }
-
-      const assistantContent = aiData.message;
 
       // Insert assistant message
       const { data: aiMsg, error: insertError } = await supabase
@@ -169,9 +164,20 @@ const Chat = () => {
       if (insertError) throw insertError;
 
       setMessages(prev => [...prev, aiMsg as Message]);
+      toast.success(`${conversation.personalities.display_name} replied!`);
     } catch (error: any) {
       console.error('Chat error:', error);
-      toast.error("Failed to send message");
+      
+      // Show specific error messages
+      if (error.message?.includes('Rate limit')) {
+        toast.error("Rate limit exceeded. Please wait and try again.");
+      } else if (error.message?.includes('API key')) {
+        toast.error("Invalid API key. Please check your Gemini API configuration.");
+      } else if (error.message?.includes('quota')) {
+        toast.error("API quota exceeded. Please try again later.");
+      } else {
+        toast.error(error.message || "Failed to send message");
+      }
     } finally {
       setIsLoading(false);
     }

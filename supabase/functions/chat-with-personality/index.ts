@@ -94,38 +94,74 @@ Instructions:
 - Keep responses conversational and engaging (2-4 paragraphs maximum)
 - If asked about events after your era, acknowledge you lived in ${personality.era}`;
 
-    // Call Lovable AI Gateway with Google Gemini
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    // Call Google Gemini API directly
+    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
     
-    if (!LOVABLE_API_KEY) {
-      console.error('LOVABLE_API_KEY not found');
+    if (!GEMINI_API_KEY) {
+      console.error('GEMINI_API_KEY not found');
       return new Response(
-        JSON.stringify({ error: 'AI service not configured' }),
+        JSON.stringify({ error: 'AI service not configured. Please set GEMINI_API_KEY.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          ...conversationHistory,
-          { role: 'user', content: message }
-        ],
-        temperature: 0.8,
-        max_tokens: 500
-      }),
-    });
+    // Build the prompt with conversation history
+    const conversationText = conversationHistory.map(msg => 
+      `${msg.role === 'user' ? 'User' : personality.display_name}: ${msg.content}`
+    ).join('\n\n');
+
+    const fullPrompt = `${systemPrompt}
+
+Previous conversation:
+${conversationText}
+
+User: ${message}
+
+${personality.display_name}:`;
+
+    const aiResponse = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: fullPrompt
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.8,
+            maxOutputTokens: 800,
+            topP: 0.95,
+          },
+          safetySettings: [
+            {
+              category: "HARM_CATEGORY_HARASSMENT",
+              threshold: "BLOCK_NONE"
+            },
+            {
+              category: "HARM_CATEGORY_HATE_SPEECH",
+              threshold: "BLOCK_NONE"
+            },
+            {
+              category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+              threshold: "BLOCK_NONE"
+            },
+            {
+              category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+              threshold: "BLOCK_NONE"
+            }
+          ]
+        }),
+      }
+    );
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error('Lovable AI error:', aiResponse.status, errorText);
+      console.error('Gemini AI error:', aiResponse.status, errorText);
       
       if (aiResponse.status === 429) {
         return new Response(
@@ -134,10 +170,10 @@ Instructions:
         );
       }
       
-      if (aiResponse.status === 402) {
+      if (aiResponse.status === 403) {
         return new Response(
-          JSON.stringify({ error: 'AI credits exhausted. Please add credits to continue.' }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          JSON.stringify({ error: 'Invalid API key or quota exceeded.' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
@@ -148,7 +184,17 @@ Instructions:
     }
 
     const aiData = await aiResponse.json();
-    const assistantMessage = aiData.choices[0].message.content;
+    
+    // Extract text from Gemini response format
+    if (!aiData.candidates || !aiData.candidates[0] || !aiData.candidates[0].content) {
+      console.error('Unexpected Gemini response format:', JSON.stringify(aiData));
+      return new Response(
+        JSON.stringify({ error: 'Unexpected AI response format' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const assistantMessage = aiData.candidates[0].content.parts[0].text;
 
     // Return the AI response
     return new Response(
