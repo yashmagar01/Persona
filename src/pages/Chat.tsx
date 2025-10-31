@@ -283,9 +283,9 @@ const Chat = () => {
     : [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted flex flex-col">
+    <div className="h-screen bg-gradient-to-br from-background to-muted flex flex-col">
       {/* Header */}
-      <header className="bg-card border-b border-border shadow-sm">
+      <header className="bg-card border-b border-border shadow-sm flex-shrink-0">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={() => navigate("/chatboard")}>
@@ -320,7 +320,7 @@ const Chat = () => {
 
       {/* Guest User Banner */}
       {conversationId?.startsWith('guest-') && (
-        <div className="bg-gradient-to-r from-primary/10 to-accent/10 border-b border-border">
+        <div className="bg-gradient-to-r from-primary/10 to-accent/10 border-b border-border flex-shrink-0">
           <div className="container mx-auto px-4 py-3 max-w-4xl">
             <div className="flex items-center justify-between gap-4">
               <p className="text-sm text-foreground">
@@ -339,7 +339,7 @@ const Chat = () => {
       )}
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden">
         <div className="container mx-auto px-4 py-6 max-w-4xl">
           {/* Personality Info Card */}
           <Card className="mb-6 p-6 bg-card/50 backdrop-blur-sm border-border">
@@ -361,8 +361,21 @@ const Chat = () => {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
             </div>
           ) : messages.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">No messages yet. Start the conversation!</p>
+            <div className="text-center py-12 px-4">
+              <div className="inline-block bg-card border border-border rounded-2xl p-6 shadow-md max-w-md">
+                <div className="mb-3 text-4xl">👋</div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">
+                  Welcome to your conversation with {personality.display_name}!
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  {conversationId?.startsWith('guest-') 
+                    ? "You're chatting as a guest. Start by asking a question or sharing your thoughts!"
+                    : "Your conversation is ready! Ask anything and I'll respond in character."}
+                </p>
+                <p className="text-xs text-muted-foreground italic">
+                  💡 Tip: Try asking about my life experiences, values, or era
+                </p>
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
@@ -413,18 +426,24 @@ const Chat = () => {
         </div>
       </div>
 
-      {/* Input Area */}
-      <div className="bg-card border-t border-border">
-        <div className="container mx-auto px-4 py-4 max-w-4xl">
+      {/* Input Area - Fixed at bottom */}
+      <div className="bg-card border-t border-border flex-shrink-0 sticky bottom-0 z-10 shadow-lg">
+        <div className="container mx-auto px-4 py-3 sm:py-4 max-w-4xl">
           <form onSubmit={handleSendMessage} className="flex gap-2">
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Type your message..."
               disabled={isLoading}
-              className="flex-1"
+              className="flex-1 h-10 sm:h-auto"
+              autoComplete="off"
             />
-            <Button type="submit" disabled={isLoading || !input.trim()}>
+            <Button 
+              type="submit" 
+              disabled={isLoading || !input.trim()}
+              size="icon"
+              className="h-10 w-10 sm:h-auto sm:w-auto sm:px-4"
+            >
               {isLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (

@@ -106,7 +106,7 @@ const Chatboard = () => {
         messages: []
       }));
       
-      toast.success(`Starting guest chat with ${displayName}`);
+      // Navigate directly without toast (we'll show welcome message in chat page)
       navigate(`/chat/${guestConversationId}`);
       return;
     }
