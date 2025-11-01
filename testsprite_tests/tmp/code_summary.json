@@ -1,0 +1,123 @@
+{
+  "projectName": "Historical Chatboard",
+  "projectDescription": "An interactive web application that lets users have AI-powered conversations with legendary Indian historical personalities. Users can chat with figures like Mahatma Gandhi, Shivaji Maharaj, APJ Abdul Kalam, and more, with each personality responding authentically based on their character, values, and speaking style.",
+  "techStack": {
+    "frontend": [
+      "React 18.3.1",
+      "TypeScript 5.8.3",
+      "Vite 5.4.19",
+      "React Router DOM 6.30.1",
+      "Tailwind CSS 3.4.17",
+      "shadcn/ui components (Radix UI)",
+      "React Query (TanStack Query) 5.83.0",
+      "Sonner (Toast notifications)",
+      "Lucide React (Icons)"
+    ],
+    "backend": [
+      "Supabase (Authentication & Database)",
+      "PostgreSQL (via Supabase)",
+      "Supabase Edge Functions (Deno)"
+    ],
+    "ai": [
+      "Google Gemini API (gemini-1.5-flash)",
+      "AI-powered personality responses"
+    ],
+    "styling": [
+      "Tailwind CSS",
+      "CSS Modules",
+      "Responsive Design"
+    ]
+  },
+  "features": [
+    {
+      "name": "Landing Page",
+      "description": "Hero section with project introduction and call-to-action buttons",
+      "route": "/",
+      "component": "Landing.tsx"
+    },
+    {
+      "name": "Authentication",
+      "description": "Sign up and sign in functionality with email/password using Supabase Auth",
+      "route": "/auth",
+      "component": "Auth.tsx"
+    },
+    {
+      "name": "Personality Browser (Chatboard)",
+      "description": "Browse and search through 10+ Indian historical personalities with their bios and values",
+      "route": "/chatboard",
+      "component": "Chatboard.tsx"
+    },
+    {
+      "name": "Chat Interface",
+      "description": "Real-time chat with AI-powered historical personalities using Gemini API",
+      "route": "/chat/:conversationId",
+      "component": "Chat.tsx"
+    },
+    {
+      "name": "Conversation History",
+      "description": "View and manage past conversations with different personalities",
+      "route": "/conversations",
+      "component": "Conversations.tsx"
+    },
+    {
+      "name": "Personality Seeding",
+      "description": "Admin interface to populate database with historical personalities",
+      "route": "/seed",
+      "component": "SeedPersonalities.tsx"
+    }
+  ],
+  "personalities": [
+    "Mahatma Gandhi (1869-1948) - Non-violence and Truth",
+    "Chhatrapati Shivaji Maharaj (1630-1680) - Courage and Strategy",
+    "Dr. APJ Abdul Kalam (1931-2015) - Innovation and Youth Empowerment",
+    "Rani Lakshmibai (1828-1858) - Bravery and Women's Strength",
+    "Chanakya (375-283 BCE) - Strategic Wisdom",
+    "Swami Vivekananda (1863-1902) - Self-realization and Service",
+    "Bhagat Singh (1907-1931) - Revolutionary Freedom",
+    "Savitribai Phule (1831-1897) - Women's Education",
+    "Netaji Subhas Chandra Bose (1897-1945) - Total Freedom",
+    "Rani Durgavati (1524-1564) - Sovereignty and Leadership"
+  ],
+  "database": {
+    "tables": [
+      "profiles - User profile information",
+      "personalities - Historical figures with bios and speaking styles",
+      "conversations - Chat sessions between users and personalities",
+      "messages - Individual chat messages with role (user/assistant)"
+    ],
+    "security": "Row Level Security (RLS) policies enabled"
+  },
+  "aiIntegration": {
+    "provider": "Google Gemini",
+    "model": "gemini-1.5-flash",
+    "implementation": "Direct API calls from frontend",
+    "features": [
+      "Personality-aware responses",
+      "Context-aware conversations",
+      "Speaking style matching",
+      "Historical accuracy",
+      "Value-based responses"
+    ]
+  },
+  "keyFunctionalities": [
+    "User registration and authentication",
+    "Browse historical personalities",
+    "Search and filter personalities",
+    "Create new conversations",
+    "Send and receive AI-generated messages",
+    "View conversation history",
+    "Personality-specific AI responses",
+    "Real-time chat interface"
+  ],
+  "environment": {
+    "development": {
+      "port": 8081,
+      "command": "npm run dev"
+    },
+    "required_env_vars": [
+      "VITE_SUPABASE_URL",
+      "VITE_SUPABASE_PUBLISHABLE_KEY",
+      "VITE_GEMINI_API_KEY"
+    ]
+  }
+}

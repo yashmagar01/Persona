@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { ArrowLeft, Send, Loader2, User } from "lucide-react";
 import { toast } from "sonner";
 import { generatePersonalityResponse, isGeminiConfigured } from "@/lib/gemini";
 import { Message, MessageAvatar, MessageContent } from "@/components/ui/message";
+import { Conversation, ConversationContent, ConversationEmptyState, ConversationScrollButton } from "@/components/ui/conversation";
 
 interface Message {
   id: string;
@@ -40,7 +41,6 @@ const Chat = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingMessages, setIsFetchingMessages] = useState(true);
   const [isTyping, setIsTyping] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (conversationId) {
@@ -48,14 +48,6 @@ const Chat = () => {
       fetchMessages();
     }
   }, [conversationId]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
 
   const fetchConversation = async () => {
     try {
@@ -339,100 +331,101 @@ const Chat = () => {
         </div>
       )}
 
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900">
-        <div className="container mx-auto px-4 py-6 max-w-4xl">
-          {/* Personality Info Card */}
-          <Card className="mb-6 p-6 bg-card/50 backdrop-blur-sm border-border">
-            <div className="flex flex-wrap gap-2 mb-2">
-              {valuesPillars.map((value, index) => (
-                <Badge key={index} variant="secondary">
-                  {value}
-                </Badge>
-              ))}
-            </div>
-            <p className="text-sm text-muted-foreground">
-              I'm here to share insights about my life, values, and the era I lived in. Ask me anything!
-            </p>
-          </Card>
-
-          {/* Messages */}
-          {isFetchingMessages ? (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-            </div>
-          ) : messages.length === 0 ? (
-            <div className="text-center py-12 px-4">
-              <div className="inline-block bg-card border border-border rounded-2xl p-6 shadow-md max-w-md">
-                <div className="mb-3 text-4xl">👋</div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  Welcome to your conversation with {personality.display_name}!
-                </h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  {conversationId?.startsWith('guest-') 
-                    ? "You're chatting as a guest. Start by asking a question or sharing your thoughts!"
-                    : "Your conversation is ready! Ask anything and I'll respond in character."}
-                </p>
-                <p className="text-xs text-muted-foreground italic">
-                  💡 Tip: Try asking about my life experiences, values, or era
-                </p>
+      {/* Messages Area with Conversation Component */}
+      <div className="flex-1 relative bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900">
+        <Conversation className="h-full">
+          <ConversationContent className="container mx-auto px-4 py-6 max-w-4xl">
+            {/* Personality Info Card */}
+            <Card className="mb-6 p-6 bg-card/50 backdrop-blur-sm border-border">
+              <div className="flex flex-wrap gap-2 mb-2">
+                {valuesPillars.map((value, index) => (
+                  <Badge key={index} variant="secondary">
+                    {value}
+                  </Badge>
+                ))}
               </div>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {messages.map((message) => {
-                // Skip system messages or treat them as assistant
-                const messageRole = message.role === "system" ? "assistant" : message.role;
+              <p className="text-sm text-muted-foreground">
+                I'm here to share insights about my life, values, and the era I lived in. Ask me anything!
+              </p>
+            </Card>
+
+            {/* Messages */}
+            {isFetchingMessages ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              </div>
+            ) : messages.length === 0 ? (
+              <ConversationEmptyState
+                icon={<div className="text-6xl">👋</div>}
+                title={`Welcome to your conversation with ${personality.display_name}!`}
+                description={
+                  conversationId?.startsWith('guest-')
+                    ? "You're chatting as a guest. Start by asking a question or sharing your thoughts!"
+                    : "Your conversation is ready! Ask anything and I'll respond in character."
+                }
+              >
+                <div className="mt-4">
+                  <p className="text-xs text-muted-foreground italic">
+                    💡 Tip: Try asking about my life experiences, values, or era
+                  </p>
+                </div>
+              </ConversationEmptyState>
+            ) : (
+              <div className="space-y-2">
+                {messages.map((message) => {
+                  // Skip system messages or treat them as assistant
+                  const messageRole = message.role === "system" ? "assistant" : message.role;
+                  
+                  return (
+                    <Message key={message.id} from={messageRole}>
+                      {messageRole === "assistant" && (
+                        <MessageAvatar 
+                          src={personality.avatar_url || ""} 
+                          name={personality.display_name}
+                        />
+                      )}
+                      <MessageContent>
+                        <p className="text-sm whitespace-pre-wrap leading-relaxed font-medium">{message.content}</p>
+                        <p className="text-xs mt-1.5 opacity-80 font-normal">
+                          {new Date(message.created_at).toLocaleTimeString()}
+                        </p>
+                      </MessageContent>
+                      {messageRole === "user" && (
+                        <MessageAvatar 
+                          src="" 
+                          name="You"
+                        />
+                      )}
+                    </Message>
+                  );
+                })}
                 
-                return (
-                  <Message key={message.id} from={messageRole}>
-                    {messageRole === "assistant" && (
-                      <MessageAvatar 
-                        src={personality.avatar_url || ""} 
-                        name={personality.display_name}
-                      />
-                    )}
+                {/* Typing Indicator */}
+                {isTyping && (
+                  <Message from="assistant">
+                    <MessageAvatar 
+                      src={personality.avatar_url || ""} 
+                      name={personality.display_name}
+                    />
                     <MessageContent>
-                      <p className="text-sm whitespace-pre-wrap leading-relaxed font-medium">{message.content}</p>
-                      <p className="text-xs mt-1.5 opacity-80 font-normal">
-                        {new Date(message.created_at).toLocaleTimeString()}
-                      </p>
-                    </MessageContent>
-                    {messageRole === "user" && (
-                      <MessageAvatar 
-                        src="" 
-                        name="You"
-                      />
-                    )}
-                  </Message>
-                );
-              })}
-              
-              {/* Typing Indicator */}
-              {isTyping && (
-                <Message from="assistant">
-                  <MessageAvatar 
-                    src={personality.avatar_url || ""} 
-                    name={personality.display_name}
-                  />
-                  <MessageContent>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground">
-                        {personality.display_name} is typing
-                      </span>
-                      <div className="flex gap-1">
-                        <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                        <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                        <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">
+                          {personality.display_name} is typing
+                        </span>
+                        <div className="flex gap-1">
+                          <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                          <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                          <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                        </div>
                       </div>
-                    </div>
-                  </MessageContent>
-                </Message>
-              )}
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
+                    </MessageContent>
+                  </Message>
+                )}
+              </div>
+            )}
+          </ConversationContent>
+          <ConversationScrollButton />
+        </Conversation>
       </div>
 
       {/* Input Area - Fixed at bottom */}
