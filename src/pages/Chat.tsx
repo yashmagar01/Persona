@@ -397,7 +397,7 @@ const Chat = () => {
                         />
                       )}
                       <MessageContent>
-                        <Response className="text-sm leading-relaxed font-medium prose prose-sm dark:prose-invert max-w-none">
+                        <Response className="text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none prose-p:text-current prose-headings:text-current prose-strong:text-current prose-li:text-current prose-a:text-current">
                           {message.content}
                         </Response>
                         <p className="text-xs mt-1.5 opacity-80 font-normal">

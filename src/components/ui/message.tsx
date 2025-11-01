@@ -29,7 +29,7 @@ const Message = React.forwardRef<
 Message.displayName = "Message"
 
 const messageContentVariants = cva(
-  "flex flex-col gap-2 overflow-hidden rounded-2xl px-5 py-3 text-sm shadow-md transition-all duration-300 hover:shadow-lg group-data-[from=user]/message:bg-black group-data-[from=user]/message:text-white group-data-[from=assistant]/message:bg-gray-100 group-data-[from=assistant]/message:text-gray-900 dark:group-data-[from=assistant]/message:bg-gray-800 dark:group-data-[from=assistant]/message:text-gray-100",
+  "flex flex-col gap-2 overflow-hidden rounded-2xl px-5 py-3 text-sm shadow-md transition-all duration-300 hover:shadow-lg group-data-[from=user]/message:bg-black group-data-[from=user]/message:text-white group-data-[from=assistant]/message:bg-gray-100 group-data-[from=assistant]/message:text-gray-950 dark:group-data-[from=assistant]/message:bg-gray-800 dark:group-data-[from=assistant]/message:text-gray-50",
   {
     variants: {
       variant: {
