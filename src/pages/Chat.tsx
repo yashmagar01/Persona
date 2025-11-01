@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Send, Loader2, User } from "lucide-react";
 import { toast } from "sonner";
 import { generatePersonalityResponse, isGeminiConfigured } from "@/lib/gemini";
+import { Message, MessageAvatar, MessageContent } from "@/components/ui/message";
 
 interface Message {
   id: string;
@@ -378,35 +379,43 @@ const Chat = () => {
               </div>
             </div>
           ) : (
-            <div className="space-y-4">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
-                >
-                  <div
-                    className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                      message.role === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-card border border-border text-card-foreground"
-                    }`}
-                  >
-                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                    <p className={`text-xs mt-2 ${
-                      message.role === "user" 
-                        ? "text-primary-foreground/70" 
-                        : "text-muted-foreground"
-                    }`}>
-                      {new Date(message.created_at).toLocaleTimeString()}
-                    </p>
-                  </div>
-                </div>
-              ))}
+            <div className="space-y-2">
+              {messages.map((message) => {
+                // Skip system messages or treat them as assistant
+                const messageRole = message.role === "system" ? "assistant" : message.role;
+                
+                return (
+                  <Message key={message.id} from={messageRole}>
+                    {messageRole === "assistant" && (
+                      <MessageAvatar 
+                        src={personality.avatar_url || ""} 
+                        name={personality.display_name}
+                      />
+                    )}
+                    <MessageContent>
+                      <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                      <p className="text-xs mt-2 opacity-70">
+                        {new Date(message.created_at).toLocaleTimeString()}
+                      </p>
+                    </MessageContent>
+                    {messageRole === "user" && (
+                      <MessageAvatar 
+                        src="" 
+                        name="You"
+                      />
+                    )}
+                  </Message>
+                );
+              })}
               
               {/* Typing Indicator */}
               {isTyping && (
-                <div className="flex justify-start">
-                  <div className="max-w-[80%] rounded-2xl px-4 py-3 bg-card border border-border">
+                <Message from="assistant">
+                  <MessageAvatar 
+                    src={personality.avatar_url || ""} 
+                    name={personality.display_name}
+                  />
+                  <MessageContent>
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-muted-foreground">
                         {personality.display_name} is typing
@@ -417,8 +426,8 @@ const Chat = () => {
                         <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                       </div>
                     </div>
-                  </div>
-                </div>
+                  </MessageContent>
+                </Message>
               )}
             </div>
           )}
