@@ -29,7 +29,7 @@ const Message = React.forwardRef<
 Message.displayName = "Message"
 
 const messageContentVariants = cva(
-  "flex flex-col gap-2 overflow-hidden rounded-2xl px-4 py-3 text-sm group-data-[from=user]/message:bg-primary group-data-[from=user]/message:text-primary-foreground group-data-[from=assistant]/message:bg-secondary",
+  "flex flex-col gap-2 overflow-hidden rounded-2xl px-5 py-3 text-sm shadow-sm transition-all group-data-[from=user]/message:bg-gradient-to-br group-data-[from=user]/message:from-orange-500 group-data-[from=user]/message:to-orange-600 group-data-[from=user]/message:text-white group-data-[from=assistant]/message:bg-gradient-to-br group-data-[from=assistant]/message:from-emerald-500 group-data-[from=assistant]/message:to-emerald-600 group-data-[from=assistant]/message:text-white",
   {
     variants: {
       variant: {
@@ -63,9 +63,9 @@ const MessageAvatar = React.forwardRef<
     name?: string
   }
 >(({ className, src, name, ...props }, ref) => (
-  <Avatar className={cn("size-8 shrink-0 ring-1", className)} {...props}>
+  <Avatar className={cn("size-10 shrink-0 ring-2 ring-white shadow-md", className)} {...props}>
     <AvatarImage src={src} />
-    <AvatarFallback className="text-xs">
+    <AvatarFallback className="text-xs font-semibold bg-gradient-to-br from-slate-600 to-slate-700 text-white">
       {name?.slice(0, 2).toUpperCase()}
     </AvatarFallback>
   </Avatar>

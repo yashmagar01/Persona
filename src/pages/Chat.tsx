@@ -340,7 +340,7 @@ const Chat = () => {
       )}
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900">
         <div className="container mx-auto px-4 py-6 max-w-4xl">
           {/* Personality Info Card */}
           <Card className="mb-6 p-6 bg-card/50 backdrop-blur-sm border-border">
@@ -393,8 +393,8 @@ const Chat = () => {
                       />
                     )}
                     <MessageContent>
-                      <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
-                      <p className="text-xs mt-2 opacity-70">
+                      <p className="text-sm whitespace-pre-wrap leading-relaxed font-medium">{message.content}</p>
+                      <p className="text-xs mt-1.5 opacity-80 font-normal">
                         {new Date(message.created_at).toLocaleTimeString()}
                       </p>
                     </MessageContent>
