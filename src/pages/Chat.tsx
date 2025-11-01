@@ -190,12 +190,21 @@ const Chat = () => {
         content: msg.content
       }));
 
-      // Generate AI response using Gemini
-      const assistantContent = await generatePersonalityResponse(
-        conversation.personalities,
-        conversationHistory,
-        userMessage
-      );
+      // Generate AI response using Gemini with retry logic
+      let assistantContent: string;
+      try {
+        assistantContent = await generatePersonalityResponse(
+          conversation.personalities,
+          conversationHistory,
+          userMessage
+        );
+      } catch (error: any) {
+        // Handle rate limit errors gracefully
+        if (error.message?.includes('Rate limit')) {
+          throw new Error(`${conversation.personalities.display_name} is experiencing high demand. Please wait 10-15 seconds and try again.`);
+        }
+        throw error;
+      }
 
       let aiMsg: Message;
 
@@ -245,8 +254,10 @@ const Chat = () => {
       setIsTyping(false);
       
       // Show specific error messages
-      if (error.message?.includes('Rate limit')) {
-        toast.error("Rate limit exceeded. Please wait and try again.");
+      if (error.message?.includes('Rate limit') || error.message?.includes('high demand')) {
+        toast.error(error.message || "Rate limit exceeded. Please wait 10-15 seconds and try again.", {
+          duration: 5000,
+        });
       } else if (error.message?.includes('API key')) {
         toast.error("Invalid API key. Please check your Gemini API configuration.");
       } else if (error.message?.includes('quota')) {

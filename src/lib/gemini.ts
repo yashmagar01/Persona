@@ -3,6 +3,22 @@
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
+// Simple rate limiting - track last request time
+let lastRequestTime = 0;
+const MIN_REQUEST_INTERVAL = 1000; // 1 second between requests
+
+async function waitForRateLimit() {
+  const now = Date.now();
+  const timeSinceLastRequest = now - lastRequestTime;
+  
+  if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
+    const waitTime = MIN_REQUEST_INTERVAL - timeSinceLastRequest;
+    await new Promise(resolve => setTimeout(resolve, waitTime));
+  }
+  
+  lastRequestTime = Date.now();
+}
+
 interface GeminiMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
@@ -115,6 +131,9 @@ ${personality.display_name}:`;
   const config = getPersonalityConfig(personality.display_name);
 
   try {
+    // Wait for rate limit before making request
+    await waitForRateLimit();
+    
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`,
       {
@@ -164,14 +183,18 @@ ${personality.display_name}:`;
       console.error('Gemini API error:', response.status, errorData);
 
       if (response.status === 429) {
-        throw new Error('Rate limit exceeded. Please wait a moment and try again.');
+        throw new Error('Too many requests. Please wait 10-15 seconds before trying again.');
       }
 
       if (response.status === 403) {
-        throw new Error('Invalid API key or quota exceeded.');
+        throw new Error('Invalid API key or quota exceeded. Please check your Gemini API configuration.');
       }
 
-      throw new Error('Failed to generate response from AI');
+      if (response.status === 503) {
+        throw new Error('Gemini service temporarily unavailable. Please try again in a moment.');
+      }
+
+      throw new Error('Failed to generate response from AI. Please try again.');
     }
 
     const data = await response.json();
