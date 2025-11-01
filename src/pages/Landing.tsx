@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { BookOpen, MessageSquare, Users, Sparkles } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
 import { supabase } from "@/integrations/supabase/client";
+import { ShimmeringText } from "@/components/ui/shimmering-text";
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -67,13 +68,28 @@ const Landing = () => {
               <span className="text-xs sm:text-sm font-medium">Learn from India's Greatest Minds</span>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold text-primary-foreground leading-tight px-4">
-              Historical Chatboard
+            <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold leading-tight px-4">
+              <ShimmeringText 
+                text="Historical Chatboard"
+                duration={3}
+                color="#ffffff"
+                shimmerColor="#fbbf24"
+                repeat={true}
+                repeatDelay={3}
+                className="text-4xl sm:text-5xl md:text-7xl font-bold"
+              />
             </h1>
 
             <p className="text-base sm:text-xl md:text-2xl text-primary-foreground/90 max-w-2xl mx-auto px-4">
-              Connect with legendary Indian historical personalities. Learn their wisdom, understand their values, 
-              and gain insights from those who shaped our nation.
+              <ShimmeringText 
+                text="Connect with legendary Indian historical personalities. Learn their wisdom, understand their values, and gain insights from those who shaped our nation."
+                duration={4}
+                color="rgba(255, 255, 255, 0.9)"
+                shimmerColor="#ffffff"
+                startOnView={true}
+                once={true}
+                className="text-base sm:text-xl md:text-2xl"
+              />
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center pt-4 px-4">
@@ -145,8 +161,16 @@ const Landing = () => {
       {/* Personalities Preview */}
       <section className="py-12 sm:py-16 md:py-20 bg-muted">
         <div className="container mx-auto px-4">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-4 text-foreground">
-            Meet the Legends
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-4">
+            <ShimmeringText 
+              text="Meet the Legends"
+              duration={2.5}
+              color="#0f172a"
+              shimmerColor="#3b82f6"
+              startOnView={true}
+              once={true}
+              className="text-2xl sm:text-3xl md:text-4xl font-bold"
+            />
           </h2>
           <p className="text-sm sm:text-base text-center text-muted-foreground mb-12 sm:mb-16 max-w-2xl mx-auto px-4">
             Chat with iconic figures who changed the course of Indian history
