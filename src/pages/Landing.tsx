@@ -2,9 +2,50 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { BookOpen, MessageSquare, Users, Sparkles } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
+import { supabase } from "@/integrations/supabase/client";
 
 const Landing = () => {
   const navigate = useNavigate();
+
+  // Function to create a guest conversation and navigate directly to chat
+  const startChatWithPersonality = async (personalityName: string) => {
+    try {
+      // Fetch the personality from database
+      const { data: personalities, error } = await supabase
+        .from('personalities')
+        .select('id, display_name')
+        .ilike('display_name', `%${personalityName}%`)
+        .limit(1);
+
+      if (error || !personalities || personalities.length === 0) {
+        console.error('Error fetching personality:', error);
+        // Fallback to chatboard if personality not found
+        navigate('/chatboard');
+        return;
+      }
+
+      const personality = personalities[0];
+      
+      // Create a guest conversation ID
+      const guestConversationId = `guest-${personality.id}-${Date.now()}`;
+      
+      // Store guest conversation in localStorage
+      const guestConversation = {
+        id: guestConversationId,
+        personality_id: personality.id,
+        title: `Chat with ${personality.display_name}`,
+        created_at: new Date().toISOString(),
+      };
+      
+      localStorage.setItem(`guest-conversation-${guestConversationId}`, JSON.stringify(guestConversation));
+      
+      // Navigate directly to the chat
+      navigate(`/chat/${guestConversationId}`);
+    } catch (error) {
+      console.error('Error starting chat:', error);
+      navigate('/chatboard');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted">
@@ -123,7 +164,7 @@ const Landing = () => {
               <div 
                 key={person.name}
                 className="bg-card rounded-xl border border-border overflow-hidden hover:shadow-xl transition-all cursor-pointer hover:-translate-y-2 group"
-                onClick={() => navigate("/chatboard")}
+                onClick={() => startChatWithPersonality(person.name)}
               >
                 <div className="aspect-square relative overflow-hidden">
                   <img 
