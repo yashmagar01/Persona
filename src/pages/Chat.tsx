@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { generatePersonalityResponse, isGeminiConfigured } from "@/lib/gemini";
 import { Message, MessageAvatar, MessageContent } from "@/components/ui/message";
 import { Conversation, ConversationContent, ConversationEmptyState, ConversationScrollButton } from "@/components/ui/conversation";
+import { Response } from "@/components/ui/response";
 
 interface Message {
   id: string;
@@ -396,7 +397,9 @@ const Chat = () => {
                         />
                       )}
                       <MessageContent>
-                        <p className="text-sm whitespace-pre-wrap leading-relaxed font-medium">{message.content}</p>
+                        <Response className="text-sm leading-relaxed font-medium prose prose-sm dark:prose-invert max-w-none">
+                          {message.content}
+                        </Response>
                         <p className="text-xs mt-1.5 opacity-80 font-normal">
                           {new Date(message.created_at).toLocaleTimeString()}
                         </p>
