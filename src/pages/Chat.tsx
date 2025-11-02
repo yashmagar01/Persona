@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useConversationDraft } from "@/features/chat/hooks/useChatStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -11,6 +12,7 @@ import { generatePersonalityResponse, isGeminiConfigured } from "@/lib/gemini";
 import { Message, MessageAvatar, MessageContent } from "@/components/ui/message";
 import { Conversation, ConversationContent, ConversationEmptyState, ConversationScrollButton } from "@/components/ui/conversation";
 import { Response } from "@/components/ui/response";
+import { MessageSkeleton } from "@/features/chat/components/MessageList/MessageSkeleton";
 
 interface Message {
   id: string;
@@ -38,10 +40,20 @@ const Chat = () => {
   const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversation, setConversation] = useState<Conversation | null>(null);
-  const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingMessages, setIsFetchingMessages] = useState(true);
   const [isTyping, setIsTyping] = useState(false);
+  
+  // Use draft store for input persistence
+  const { draft, setDraft, clearDraft } = useConversationDraft(conversationId || 'temp');
+  const [input, setInput] = useState("");
+
+  // Restore draft when conversation loads
+  useEffect(() => {
+    if (conversationId && draft) {
+      setInput(draft);
+    }
+  }, [conversationId, draft]);
 
   useEffect(() => {
     if (conversationId) {
@@ -141,6 +153,7 @@ const Chat = () => {
 
     const userMessage = input.trim();
     setInput("");
+    clearDraft(); // Clear persisted draft when sending
     setIsLoading(true);
     setIsTyping(true);
 
@@ -154,6 +167,21 @@ const Chat = () => {
       }
 
       let userMsg: Message;
+
+      // Helper to bump conversation's last activity timestamp
+      const touchConversation = async () => {
+        try {
+          if (!conversationId.startsWith('guest-')) {
+            await supabase
+              .from("conversations")
+              .update({ updated_at: new Date().toISOString() })
+              .eq("id", conversationId);
+          }
+        } catch (err) {
+          // Non-fatal: log but don't block chat flow
+          console.warn('Failed to update conversation timestamp', err);
+        }
+      };
 
       // Handle guest vs authenticated user
       if (conversationId.startsWith('guest-')) {
@@ -183,6 +211,9 @@ const Chat = () => {
         if (userError) throw userError;
         userMsg = dbUserMsg as Message;
         setMessages(prev => [...prev, userMsg]);
+
+        // Update last activity timestamp for conversation
+        await touchConversation();
       }
 
       // Get conversation history for context (last 10 messages)
@@ -246,6 +277,9 @@ const Chat = () => {
         if (insertError) throw insertError;
         aiMsg = dbAiMsg as Message;
         setMessages(prev => [...prev, aiMsg]);
+
+        // Touch conversation again to reflect assistant reply time
+        await touchConversation();
       }
 
       setIsTyping(false);
@@ -397,7 +431,7 @@ const Chat = () => {
                         />
                       )}
                       <MessageContent>
-                        <Response className="text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none prose-p:text-current prose-headings:text-current prose-strong:text-current prose-li:text-current prose-a:text-current">
+                        <Response className="text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none prose-p:text-current prose-headings:text-current prose-strong:font-semibold prose-strong:text-[#ececec] prose-em:italic prose-em:text-[#ececec] prose-li:text-current prose-a:text-primary prose-a:underline hover:prose-a:text-primary/80 prose-code:text-[#ececec] prose-code:bg-[#2f2f2f] prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-[#1e1e1e] prose-pre:border prose-pre:border-[rgba(77,77,77,0.2)]">
                           {message.content}
                         </Response>
                         <p className="text-xs mt-1.5 opacity-80 font-normal">
@@ -414,27 +448,8 @@ const Chat = () => {
                   );
                 })}
                 
-                {/* Typing Indicator */}
-                {isTyping && (
-                  <Message from="assistant">
-                    <MessageAvatar 
-                      src={personality.avatar_url || ""} 
-                      name={personality.display_name}
-                    />
-                    <MessageContent>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">
-                          {personality.display_name} is typing
-                        </span>
-                        <div className="flex gap-1">
-                          <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                          <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                          <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                        </div>
-                      </div>
-                    </MessageContent>
-                  </Message>
-                )}
+                {/* Loading Skeleton while AI is generating response */}
+                {isTyping && <MessageSkeleton from="assistant" />}
               </div>
             )}
           </ConversationContent>
@@ -448,7 +463,14 @@ const Chat = () => {
           <form onSubmit={handleSendMessage} className="flex gap-2">
             <Input
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                const newValue = e.target.value;
+                setInput(newValue);
+                // Persist draft to store (debounced in real usage)
+                if (conversationId) {
+                  setDraft(newValue);
+                }
+              }}
               placeholder="Type your message..."
               disabled={isLoading}
               className="flex-1 h-10 sm:h-auto"

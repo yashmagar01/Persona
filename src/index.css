@@ -2,13 +2,50 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* ChatGPT-inspired Theme System */
 
 @layer base {
   :root {
-    /* Indian heritage color palette */
+    /* Safe Area Insets for notch devices */
+    --safe-area-inset-top: env(safe-area-inset-top, 0px);
+    --safe-area-inset-right: env(safe-area-inset-right, 0px);
+    --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-area-inset-left: env(safe-area-inset-left, 0px);
+    
+    /* ChatGPT Theme - Dark Mode (Default) */
+    /* Backgrounds */
+    --bg-primary: #212121;
+    --bg-secondary: #2f2f2f;
+    --bg-sidebar: #171717;
+    --bg-tertiary: #1a1a1a;
+    --bg-hover: #3f3f3f;
+    --bg-active: #4a4a4a;
+    
+    /* Text */
+    --text-primary: #ececec;
+    --text-secondary: #b4b4b4;
+    --text-tertiary: #8e8e8e;
+    --text-inverse: #212121;
+    
+    /* Borders */
+    --border-primary: rgba(77, 77, 77, 0.2);
+    --border-secondary: rgba(77, 77, 77, 0.1);
+    --border-hover: rgba(77, 77, 77, 0.3);
+    --border-focus: rgba(16, 163, 127, 0.4);
+    
+    /* Accent (ChatGPT Green) */
+    --accent-primary: #10a37f;
+    --accent-secondary: #74aa9c;
+    --accent-hover: #0e8c6f;
+    --accent-light: rgba(16, 163, 127, 0.1);
+    
+    /* Semantic Colors */
+    --color-success: #10a37f;
+    --color-warning: #f59e0b;
+    --color-error: #ef4444;
+    --color-info: #3b82f6;
+
+    /* Keep existing shadcn/Indian heritage color palette for compatibility */
     --background: 40 20% 97%;
     --foreground: 24 24% 10%;
 
@@ -103,5 +140,52 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    /* Prevent overscroll bounce on mobile */
+    overscroll-behavior-y: none;
+    /* Better font rendering on mobile */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Disable tap highlight on mobile */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Ensure safe areas are respected */
+  body {
+    padding-top: var(--safe-area-inset-top);
+    padding-left: var(--safe-area-inset-left);
+    padding-right: var(--safe-area-inset-right);
+  }
+}
+
+@layer utilities {
+  /* Safe area utilities */
+  .pb-safe {
+    padding-bottom: calc(1rem + var(--safe-area-inset-bottom));
+  }
+
+  .pt-safe {
+    padding-top: calc(1rem + var(--safe-area-inset-top));
+  }
+
+  .pl-safe {
+    padding-left: calc(1rem + var(--safe-area-inset-left));
+  }
+
+  .pr-safe {
+    padding-right: calc(1rem + var(--safe-area-inset-right));
+  }
+
+  /* Touch target minimum size (44px) */
+  .touch-target {
+    @apply min-w-[44px] min-h-[44px];
+  }
+
+  /* Mobile-optimized scroll */
+  .mobile-scroll {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
   }
 }
