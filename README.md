@@ -44,12 +44,12 @@ Developed by students of **Government Polytechnic, Awasari Khurd, Pune (NBA Accr
 ### Steps  
 1. **Clone the repository**  
    ```bash
-   git clone <YOUR_GIT_URL>
+   git clone https://github.com/yashmagar01/Persona.git
    ```
 
 2. **Navigate to project folder**
    ```bash
-   cd <YOUR_PROJECT_NAME>
+   cd persona
    ```
 
 3. **Install dependencies**
