@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, MessageSquare, History, Sparkles, Shield } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 const Auth = () => {
@@ -173,7 +173,7 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted to-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-6xl">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
             Historical Chatboard
@@ -181,7 +181,9 @@ const Auth = () => {
           <p className="text-muted-foreground mt-2">Connect with India's greatest minds</p>
         </div>
 
-        <Card className="shadow-xl border-border">
+        <div className="grid lg:grid-cols-2 gap-8 items-start">
+          {/* Auth Form Section */}
+          <Card className="shadow-xl border-border">
           <CardHeader>
             <CardTitle>Welcome</CardTitle>
             <CardDescription>Sign in or create an account to start your journey</CardDescription>
@@ -389,6 +391,80 @@ const Auth = () => {
             </div>
           </CardContent>
         </Card>
+
+          {/* Benefits Sidebar */}
+          <Card className="shadow-xl border-border bg-gradient-to-br from-orange-500/10 via-orange-600/5 to-background lg:sticky lg:top-24">
+            <CardHeader>
+              <CardTitle className="text-2xl flex items-center gap-2">
+                <Sparkles className="h-6 w-6 text-orange-500" />
+                Why Sign Up?
+              </CardTitle>
+              <CardDescription>
+                Unlock the full experience and save your journey through history
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Benefit 1 */}
+              <div className="flex items-start gap-4 p-4 rounded-lg bg-background/50 backdrop-blur-sm border border-border/50 hover:border-orange-500/30 transition-colors duration-200">
+                <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg">
+                  <MessageSquare className="h-6 w-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-foreground mb-1">Save Your Conversations</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Never lose a meaningful dialogue. All your conversations are securely saved and accessible anytime.
+                  </p>
+                </div>
+              </div>
+
+              {/* Benefit 2 */}
+              <div className="flex items-start gap-4 p-4 rounded-lg bg-background/50 backdrop-blur-sm border border-border/50 hover:border-orange-500/30 transition-colors duration-200">
+                <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg">
+                  <History className="h-6 w-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-foreground mb-1">Access Chat History</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Revisit past conversations and continue where you left off. Your entire chat history at your fingertips.
+                  </p>
+                </div>
+              </div>
+
+              {/* Benefit 3 */}
+              <div className="flex items-start gap-4 p-4 rounded-lg bg-background/50 backdrop-blur-sm border border-border/50 hover:border-orange-500/30 transition-colors duration-200">
+                <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg">
+                  <Sparkles className="h-6 w-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-foreground mb-1">Personalized Experience</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Get tailored recommendations and a customized interface that adapts to your interests.
+                  </p>
+                </div>
+              </div>
+
+              {/* Benefit 4 */}
+              <div className="flex items-start gap-4 p-4 rounded-lg bg-background/50 backdrop-blur-sm border border-border/50 hover:border-orange-500/30 transition-colors duration-200">
+                <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg">
+                  <Shield className="h-6 w-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-foreground mb-1">Secure Your Progress</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Your data is encrypted and protected. Sign in from any device and your progress is always safe.
+                  </p>
+                </div>
+              </div>
+
+              {/* Call to Action */}
+              <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-orange-500/20 to-orange-600/20 border border-orange-500/30">
+                <p className="text-sm text-center text-foreground font-medium">
+                  Join thousands exploring history through conversation 🚀
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
