@@ -1,13 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useConversationDraft } from "@/features/chat/hooks/useChatStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Send, Loader2, User, Info, Share2, X } from "lucide-react";
+import { ArrowLeft, Send, Loader2, User, Info, Share2, X, Smile, Mic, MicOff } from "lucide-react";
 import { toast } from "sonner";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { generatePersonalityResponse, isGeminiConfigured } from "@/lib/gemini";
 import { Message, MessageAvatar, MessageContent } from "@/components/ui/message";
 import { Conversation, ConversationContent, ConversationEmptyState, ConversationScrollButton } from "@/components/ui/conversation";
@@ -56,10 +58,15 @@ const Chat = () => {
   const [showGuestBanner, setShowGuestBanner] = useState(true);
   const [isBioModalOpen, setIsBioModalOpen] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(true);
+  const [isRecording, setIsRecording] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   
   // Use draft store for input persistence
   const { draft, setDraft, clearDraft } = useConversationDraft(conversationId || 'temp');
   const [input, setInput] = useState("");
+  
+  const MAX_CHARS = 500;
 
   // Restore draft when conversation loads
   useEffect(() => {
@@ -81,6 +88,16 @@ const Chat = () => {
       setShowSuggestions(false);
     }
   }, [messages.length]);
+
+  // Auto-resize textarea
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      const scrollHeight = textareaRef.current.scrollHeight;
+      const maxHeight = 24 * 4; // 4 lines (approx 24px per line)
+      textareaRef.current.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
+    }
+  }, [input]);
 
   const fetchConversation = async () => {
     try {
@@ -397,13 +414,62 @@ const Chat = () => {
   const handleSuggestionClick = (suggestion: string) => {
     setInput(suggestion);
     setShowSuggestions(false);
-    // Focus the input field
+    // Focus the textarea field
     setTimeout(() => {
-      const inputElement = document.querySelector('input[type="text"]') as HTMLInputElement;
-      if (inputElement) {
-        inputElement.focus();
+      if (textareaRef.current) {
+        textareaRef.current.focus();
       }
     }, 100);
+  };
+
+  const handleEmojiSelect = (emoji: string) => {
+    setInput(prev => prev + emoji);
+    setShowEmojiPicker(false);
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  };
+
+  const handleVoiceInput = async () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      toast.error("Voice input is not supported in your browser");
+      return;
+    }
+
+    if (isRecording) {
+      setIsRecording(false);
+      return;
+    }
+
+    try {
+      setIsRecording(true);
+      // @ts-ignore - SpeechRecognition types
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+      
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setInput(prev => prev + (prev ? ' ' : '') + transcript);
+        setIsRecording(false);
+      };
+      
+      recognition.onerror = () => {
+        toast.error("Could not capture voice input");
+        setIsRecording(false);
+      };
+      
+      recognition.onend = () => {
+        setIsRecording(false);
+      };
+      
+      recognition.start();
+    } catch (error) {
+      toast.error("Failed to start voice input");
+      setIsRecording(false);
+    }
   };
 
   const handleShareConversation = () => {
@@ -689,8 +755,34 @@ const Chat = () => {
                   );
                 })}
                 
-                {/* Loading Skeleton while AI is generating response */}
-                {isTyping && <MessageSkeleton from="assistant" />}
+                {/* Typing Indicator while AI is generating response */}
+                {isTyping && (
+                  <div className="flex items-center gap-3 py-4">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent overflow-hidden flex-shrink-0">
+                      {personality.avatar_url ? (
+                        <img 
+                          src={personality.avatar_url} 
+                          alt={personality.display_name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <User className="w-5 h-5 text-white" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <p className="text-sm text-muted-foreground italic">
+                        {personality.display_name} is typing...
+                      </p>
+                      <div className="flex gap-1">
+                        <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                        <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                        <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </ConversationContent>
@@ -698,43 +790,148 @@ const Chat = () => {
         </Conversation>
       </div>
 
-      {/* Input Area - Fixed at bottom */}
+      {/* Enhanced Input Area - Fixed at bottom */}
       <div className="bg-card border-t border-border flex-shrink-0 sticky bottom-0 z-10 shadow-lg">
         <div className="container mx-auto px-4 py-3 sm:py-4 max-w-4xl">
-          <form onSubmit={handleSendMessage} className="flex gap-2">
-            <Input
-              value={input}
-              onChange={(e) => {
-                const newValue = e.target.value;
-                setInput(newValue);
+          <form onSubmit={handleSendMessage} className="space-y-2">
+            <div className="flex gap-2 items-end">
+              {/* Emoji Picker */}
+              <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10 flex-shrink-0 hover:bg-accent transition-colors"
+                    disabled={isLoading}
+                  >
+                    <Smile className="w-5 h-5 text-muted-foreground hover:text-foreground" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-4" align="start">
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium">Select an emoji</p>
+                    <div className="grid grid-cols-8 gap-2">
+                      {['😀', '😊', '😂', '🤔', '👍', '❤️', '🎉', '🙏', '👏', '💪', '🔥', '⭐', '✨', '🌟', '💯', '🎯', 
+                        '📚', '✍️', '🤝', '🌈', '🙌', '💡', '🎓', '🏆', '🎨', '🌸', '🌺', '🌻', '🌹', '🌷', '🌱', '🍀'].map((emoji) => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          onClick={() => handleEmojiSelect(emoji)}
+                          className="text-2xl hover:scale-125 transition-transform p-1 hover:bg-accent rounded"
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+              {/* Auto-resize Textarea with Focus Glow */}
+              <div className="relative flex-1">
+                <Textarea
+                  ref={textareaRef}
+                  value={input}
+                  onChange={(e) => {
+                    const newValue = e.target.value;
+                    
+                    // Enforce character limit
+                    if (newValue.length <= MAX_CHARS) {
+                      setInput(newValue);
+                      
+                      // Hide suggestions when user starts typing their own message
+                      if (newValue.length > 0 && showSuggestions) {
+                        setShowSuggestions(false);
+                      }
+                      
+                      // Persist draft to store
+                      if (conversationId) {
+                        setDraft(newValue);
+                      }
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    // Submit on Enter, new line on Shift+Enter
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      if (input.trim()) {
+                        handleSendMessage(e as any);
+                      }
+                    }
+                  }}
+                  placeholder="Type your message..."
+                  disabled={isLoading}
+                  className={cn(
+                    "min-h-[40px] max-h-[96px] resize-none py-3 pr-12 transition-all duration-200",
+                    "focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2",
+                    "focus-visible:border-orange-500 focus-visible:shadow-[0_0_10px_rgba(249,115,22,0.3)]"
+                  )}
+                  autoComplete="off"
+                  rows={1}
+                />
                 
-                // Hide suggestions when user starts typing their own message
-                if (newValue.length > 0 && showSuggestions) {
-                  setShowSuggestions(false);
-                }
-                
-                // Persist draft to store (debounced in real usage)
-                if (conversationId) {
-                  setDraft(newValue);
-                }
-              }}
-              placeholder="Type your message..."
-              disabled={isLoading}
-              className="flex-1 h-10 sm:h-auto"
-              autoComplete="off"
-            />
-            <Button 
-              type="submit" 
-              disabled={isLoading || !input.trim()}
-              size="icon"
-              className="h-10 w-10 sm:h-auto sm:w-auto sm:px-4"
-            >
-              {isLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Send className="w-4 h-4" />
+                {/* Character Counter */}
+                {input.length > 0 && (
+                  <div className={cn(
+                    "absolute bottom-2 right-2 text-xs transition-colors",
+                    input.length >= MAX_CHARS * 0.9 ? "text-orange-500 font-semibold" : "text-muted-foreground"
+                  )}>
+                    {input.length}/{MAX_CHARS}
+                  </div>
+                )}
+              </div>
+
+              {/* Voice Input Button */}
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={handleVoiceInput}
+                className={cn(
+                  "h-10 w-10 flex-shrink-0 hover:bg-accent transition-all duration-200",
+                  isRecording && "bg-red-500/10 hover:bg-red-500/20 animate-pulse"
+                )}
+                disabled={isLoading}
+              >
+                {isRecording ? (
+                  <MicOff className="w-5 h-5 text-red-500" />
+                ) : (
+                  <Mic className="w-5 h-5 text-muted-foreground hover:text-foreground" />
+                )}
+              </Button>
+
+              {/* Send Button - Always enabled when text exists */}
+              <Button 
+                type="submit" 
+                disabled={isLoading || !input.trim()}
+                size="icon"
+                className={cn(
+                  "h-10 w-10 flex-shrink-0 transition-all duration-200",
+                  input.trim() && !isLoading && "bg-orange-500 hover:bg-orange-600 hover:scale-105 active:scale-95"
+                )}
+              >
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
+              </Button>
+            </div>
+
+            {/* Hint Text */}
+            <div className="flex items-center justify-between px-1">
+              <p className="text-xs text-muted-foreground">
+                Press <kbd className="px-1.5 py-0.5 text-xs font-semibold bg-muted border border-border rounded">Enter</kbd> to send, 
+                <kbd className="ml-1 px-1.5 py-0.5 text-xs font-semibold bg-muted border border-border rounded">Shift+Enter</kbd> for new line
+              </p>
+              {isRecording && (
+                <p className="text-xs text-red-500 font-medium flex items-center gap-1">
+                  <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                  Recording...
+                </p>
               )}
-            </Button>
+            </div>
           </form>
         </div>
       </div>
