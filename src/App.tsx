@@ -13,6 +13,8 @@ import Auth from "./pages/Auth";
 import Chatboard from "./pages/Chatboard";
 import Chat from "./pages/Chat";
 import Conversations from "./pages/Conversations";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
 import SeedPersonalities from "./pages/SeedPersonalities";
 import NotFound from "./pages/NotFound";
 import AppShell from "@/components/AppShell";
@@ -77,6 +79,15 @@ const App = () => {
                   element={
                     <ProtectedRoute>
                       <Conversations />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route path="/profile" element={<Profile />} />
+                <Route 
+                  path="/settings" 
+                  element={
+                    <ProtectedRoute>
+                      <Settings />
                     </ProtectedRoute>
                   } 
                 />

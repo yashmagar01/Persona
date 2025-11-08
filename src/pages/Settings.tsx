@@ -1,0 +1,441 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { ArrowLeft, Save, Trash2, Shield, Bell, Palette, User, LogOut } from "lucide-react";
+import { toast } from "sonner";
+
+interface UserSettings {
+  notifications_enabled: boolean;
+  email_notifications: boolean;
+  theme_preference: string;
+  language: string;
+}
+
+const Settings = () => {
+  const [user, setUser] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const navigate = useNavigate();
+
+  // Settings state
+  const [settings, setSettings] = useState<UserSettings>({
+    notifications_enabled: true,
+    email_notifications: true,
+    theme_preference: 'system',
+    language: 'en',
+  });
+
+  // Password change state
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  useEffect(() => {
+    checkAuthAndLoadSettings();
+  }, []);
+
+  const checkAuthAndLoadSettings = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast.error("Please sign in to access settings");
+        navigate("/auth");
+        return;
+      }
+
+      setUser(session.user);
+
+      // Load user settings from localStorage (or database if you have a settings table)
+      const savedSettings = localStorage.getItem(`settings_${session.user.id}`);
+      if (savedSettings) {
+        setSettings(JSON.parse(savedSettings));
+      }
+    } catch (error: any) {
+      console.error('Error loading settings:', error);
+      toast.error("Failed to load settings");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSaveSettings = async () => {
+    if (!user) return;
+
+    setIsSaving(true);
+    try {
+      // Save settings to localStorage (or database)
+      localStorage.setItem(`settings_${user.id}`, JSON.stringify(settings));
+      
+      // Apply theme change by setting HTML attribute
+      if (settings.theme_preference === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else if (settings.theme_preference === 'light') {
+        document.documentElement.classList.remove('dark');
+      } else {
+        // System theme
+        const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.classList.toggle('dark', isDark);
+      }
+
+      toast.success("Settings saved successfully!");
+    } catch (error: any) {
+      console.error('Error saving settings:', error);
+      toast.error("Failed to save settings");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) throw error;
+
+      toast.success("Password updated successfully!");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error: any) {
+      console.error('Error changing password:', error);
+      toast.error(error.message || "Failed to change password");
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+
+    setIsDeleting(true);
+    try {
+      // Delete user's conversations and messages
+      const { error: deleteConversationsError } = await supabase
+        .from('conversations')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (deleteConversationsError) throw deleteConversationsError;
+
+      // Delete user's profile
+      const { error: deleteProfileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', user.id);
+
+      if (deleteProfileError) throw deleteProfileError;
+
+      // Delete auth user (requires admin privileges or RPC function)
+      // For now, just sign out
+      await supabase.auth.signOut();
+      
+      toast.success("Account deleted successfully");
+      navigate("/");
+    } catch (error: any) {
+      console.error('Error deleting account:', error);
+      toast.error("Failed to delete account. Please contact support.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast.success("Signed out successfully");
+      navigate("/");
+    } catch (error: any) {
+      console.error('Error signing out:', error);
+      toast.error("Failed to sign out");
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted">
+      {/* Header */}
+      <header className="bg-card border-b border-border shadow-sm sticky top-0 z-10">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="icon" onClick={() => navigate("/profile")}>
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+              <h1 className="text-2xl font-bold text-foreground">Settings</h1>
+            </div>
+            <Button onClick={handleSaveSettings} disabled={isSaving}>
+              <Save className="w-4 h-4 mr-2" />
+              {isSaving ? "Saving..." : "Save Changes"}
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-8 max-w-4xl space-y-6">
+        {/* Account Settings */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <User className="w-5 h-5 text-primary" />
+              <CardTitle>Account Settings</CardTitle>
+            </div>
+            <CardDescription>Manage your account preferences</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Email</Label>
+                <p className="text-sm text-muted-foreground">{user?.email}</p>
+              </div>
+              <Button variant="outline" onClick={() => navigate("/profile")}>
+                View Profile
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Appearance Settings */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Palette className="w-5 h-5 text-primary" />
+              <CardTitle>Appearance</CardTitle>
+            </div>
+            <CardDescription>Customize how Persona looks</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="theme">Theme</Label>
+              <Select
+                value={settings.theme_preference}
+                onValueChange={(value) => setSettings({ ...settings, theme_preference: value })}
+              >
+                <SelectTrigger id="theme">
+                  <SelectValue placeholder="Select theme" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="light">Light</SelectItem>
+                  <SelectItem value="dark">Dark</SelectItem>
+                  <SelectItem value="system">System</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="language">Language</Label>
+              <Select
+                value={settings.language}
+                onValueChange={(value) => setSettings({ ...settings, language: value })}
+              >
+                <SelectTrigger id="language">
+                  <SelectValue placeholder="Select language" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">English</SelectItem>
+                  <SelectItem value="hi">हिन्दी (Hindi)</SelectItem>
+                  <SelectItem value="mr">मराठी (Marathi)</SelectItem>
+                  <SelectItem value="bn">বাংলা (Bengali)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Notification Settings */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Bell className="w-5 h-5 text-primary" />
+              <CardTitle>Notifications</CardTitle>
+            </div>
+            <CardDescription>Manage your notification preferences</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="push-notifications">Push Notifications</Label>
+                <p className="text-sm text-muted-foreground">Receive notifications in your browser</p>
+              </div>
+              <Switch
+                id="push-notifications"
+                checked={settings.notifications_enabled}
+                onCheckedChange={(checked) => setSettings({ ...settings, notifications_enabled: checked })}
+              />
+            </div>
+
+            <Separator />
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="email-notifications">Email Notifications</Label>
+                <p className="text-sm text-muted-foreground">Receive updates via email</p>
+              </div>
+              <Switch
+                id="email-notifications"
+                checked={settings.email_notifications}
+                onCheckedChange={(checked) => setSettings({ ...settings, email_notifications: checked })}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Security Settings */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Shield className="w-5 h-5 text-primary" />
+              <CardTitle>Security</CardTitle>
+            </div>
+            <CardDescription>Manage your password and security settings</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="current-password">Current Password</Label>
+              <Input
+                id="current-password"
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder="Enter current password"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="new-password">New Password</Label>
+              <Input
+                id="new-password"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Enter new password"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirm-password">Confirm New Password</Label>
+              <Input
+                id="confirm-password"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm new password"
+              />
+            </div>
+
+            <Button 
+              onClick={handleChangePassword}
+              disabled={!currentPassword || !newPassword || !confirmPassword}
+              className="w-full"
+            >
+              Change Password
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Danger Zone */}
+        <Card className="border-destructive/50">
+          <CardHeader>
+            <CardTitle className="text-destructive">Danger Zone</CardTitle>
+            <CardDescription>Irreversible actions</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-4 bg-destructive/5 rounded-lg border border-destructive/20">
+              <div className="space-y-0.5">
+                <Label>Sign Out</Label>
+                <p className="text-sm text-muted-foreground">Sign out from your account</p>
+              </div>
+              <Button variant="outline" onClick={handleSignOut}>
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
+
+            <Separator />
+
+            <div className="flex items-center justify-between p-4 bg-destructive/5 rounded-lg border border-destructive/20">
+              <div className="space-y-0.5">
+                <Label className="text-destructive">Delete Account</Label>
+                <p className="text-sm text-muted-foreground">
+                  Permanently delete your account and all data
+                </p>
+              </div>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive">
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete Account
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete your account,
+                      all your conversations, messages, and remove your data from our servers.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDeleteAccount}
+                      disabled={isDeleting}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {isDeleting ? "Deleting..." : "Delete Account"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </CardContent>
+        </Card>
+      </main>
+    </div>
+  );
+};
+
+export default Settings;

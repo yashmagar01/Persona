@@ -39,6 +39,7 @@ export function Header() {
     { to: '/', label: 'Home', end: true },
     { to: '/chatboard', label: 'Chatboard' },
     { to: '/conversations', label: 'Conversations' },
+    { to: '/profile', label: 'Profile' },
     { to: '/auth', label: 'Sign In' },
   ];
 
