@@ -14,9 +14,6 @@ import Chatboard from "./pages/Chatboard";
 import Chat from "./pages/Chat";
 import Conversations from "./pages/Conversations";
 import SeedPersonalities from "./pages/SeedPersonalities";
-import ToastDemo from "./pages/ToastDemo";
-import ToastTest from "./pages/ToastTest";
-import ChatLoadingDemo from "./pages/ChatLoadingDemo";
 import NotFound from "./pages/NotFound";
 import AppShell from "@/components/AppShell";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -70,9 +67,6 @@ const App = () => {
               {/* Public routes without the sidebar */}
               <Route path="/" element={<Landing />} />
               <Route path="/auth" element={<Auth />} />
-              <Route path="/toast-demo" element={<ToastDemo />} />
-              <Route path="/toast-test" element={<ToastTest />} />
-              <Route path="/chat-loading-demo" element={<ChatLoadingDemo />} />
 
               {/* Routes that share the app shell with sidebar */}
               <Route element={<AppShell />}>
