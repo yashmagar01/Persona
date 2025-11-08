@@ -13,6 +13,7 @@ import { Message, MessageAvatar, MessageContent } from "@/components/ui/message"
 import { Conversation, ConversationContent, ConversationEmptyState, ConversationScrollButton } from "@/components/ui/conversation";
 import { Response } from "@/components/ui/response";
 import { MessageSkeleton } from "@/features/chat/components/MessageList/MessageSkeleton";
+import { ChatLoadingSkeleton } from "@/components/ChatLoadingSkeleton";
 
 interface Message {
   id: string;
@@ -306,14 +307,7 @@ const Chat = () => {
   };
 
   if (!conversation) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading conversation...</p>
-        </div>
-      </div>
-    );
+    return <ChatLoadingSkeleton />;
   }
 
   const personality = conversation.personalities;
