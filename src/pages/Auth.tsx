@@ -208,7 +208,15 @@ const Auth = () => {
             </div>
 
             {/* Auth Form Card */}
-            <Card className="shadow-2xl border-gray-800/50 bg-gray-900/80 backdrop-blur-xl max-w-xl mx-auto w-full">
+            <div className="relative max-w-xl mx-auto w-full">
+              {/* Orange glow effect on top */}
+              <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-orange-500/50 to-transparent"></div>
+              
+              <Card className="relative shadow-2xl border-2 border-gray-700/80 bg-gray-900/90 backdrop-blur-xl overflow-hidden">
+                {/* Additional inner glow */}
+                <div className="absolute inset-0 bg-gradient-to-b from-orange-500/5 via-transparent to-transparent pointer-events-none"></div>
+                
+                <div className="relative z-10">
           <CardHeader className="space-y-4">
             {/* Inline Messaging */}
             <div className="p-4 rounded-lg bg-gradient-to-r from-orange-500/10 to-orange-600/10 border border-orange-500/20">
@@ -455,8 +463,9 @@ const Auth = () => {
               </Button>
             </div>
           </CardContent>
-        </Card>
-
+                </div>
+              </Card>
+            </div>
           </div>
 
           {/* RIGHT COLUMN - Benefits Sidebar (40%) */}
