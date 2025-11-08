@@ -4,6 +4,7 @@ import { BookOpen, MessageSquare, Users, Sparkles } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
 import { supabase } from "@/integrations/supabase/client";
 import { ShimmeringText } from "@/components/ui/shimmering-text";
+import { showAuthToast } from "@/lib/toast-notifications";
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -259,7 +260,29 @@ const Landing = () => {
                   </button>
                 </li>
                 <li>
-                  <button onClick={() => navigate("/conversations")} className="text-muted-foreground hover:text-primary transition-colors">
+                  <button 
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log('🔍 Landing: Checking auth for conversations...');
+                      
+                      const { data: { session } } = await supabase.auth.getSession();
+                      
+                      if (!session) {
+                        console.log('❌ Landing: No session - BLOCKING navigation');
+                        console.log('Toast triggered!');
+                        showAuthToast();
+                        setTimeout(() => {
+                          console.log('🔄 Landing: Redirecting to auth...');
+                          navigate("/auth");
+                        }, 2000);
+                      } else {
+                        console.log('✅ Landing: User authenticated - navigating');
+                        navigate("/conversations");
+                      }
+                    }} 
+                    className="text-muted-foreground hover:text-primary transition-colors"
+                  >
                     My Conversations
                   </button>
                 </li>

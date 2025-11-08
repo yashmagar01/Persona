@@ -34,17 +34,11 @@ const Conversations = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    checkAuth();
+    // Auth is now handled by ProtectedRoute wrapper
+    // Just fetch conversations directly
+    console.log('✅ Conversations Page: Loading conversations (auth verified by ProtectedRoute)');
     fetchConversations();
   }, []);
-
-  const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      toast.error("Please sign in to view your conversations");
-      navigate("/auth");
-    }
-  };
 
   const fetchConversations = async () => {
     setIsLoading(true);

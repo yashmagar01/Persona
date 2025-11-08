@@ -1,5 +1,5 @@
 import React from "react";
-import { Outlet, NavLink } from "react-router-dom";
+import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
@@ -19,6 +19,8 @@ import {
 } from "@/components/ui/sidebar";
 import { MessageSquare, History, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { showAuthToast } from "@/lib/toast-notifications";
 
 /**
  * AppShell
@@ -27,6 +29,52 @@ import { cn } from "@/lib/utils";
  * is off-canvas with a visible toggle button.
  */
 export default function AppShell() {
+  const navigate = useNavigate();
+
+  const handleConversationsClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    console.log('🔍 AppShell: Checking authentication for Conversations access...');
+    console.log('🔍 Event triggered, checking session...');
+    
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      console.log('📊 Session check result:', { 
+        hasSession: !!session, 
+        sessionUser: session?.user?.email || 'none',
+        error: error?.message || 'none'
+      });
+      
+      // Check if user is authenticated (NOT guest mode)
+      if (!session || !session.user) {
+        console.log('❌ AppShell: NO AUTHENTICATION - User is in guest mode or not logged in');
+        console.log('🚫 BLOCKING navigation to conversations');
+        console.log('Toast triggered!');
+        
+        // Show the toast
+        showAuthToast();
+        
+        // Wait and redirect to auth
+        setTimeout(() => {
+          console.log('🔄 Redirecting to /auth page...');
+          navigate('/auth');
+        }, 2000);
+        
+        return; // STOP HERE - do not navigate
+      }
+      
+      console.log('✅ AppShell: User IS authenticated - allowing navigation');
+      navigate('/conversations');
+      
+    } catch (err) {
+      console.error('❌ Error checking session:', err);
+      showAuthToast();
+      setTimeout(() => navigate('/auth'), 2000);
+    }
+  };
+
   return (
     <SidebarProvider>
       {/* Sidebar + rail */}
@@ -57,14 +105,9 @@ export default function AppShell() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to="/conversations"
-                      className={({ isActive }) => cn("flex items-center gap-2", isActive && "data-[active=true]")}
-                    >
-                      <History className="size-4" />
-                      <span>Conversations</span>
-                    </NavLink>
+                  <SidebarMenuButton onClick={handleConversationsClick}>
+                    <History className="size-4" />
+                    <span>Conversations</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>

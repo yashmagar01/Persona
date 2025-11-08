@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { LogOut, MessageSquare, Search, User } from "lucide-react";
 import { toast } from "sonner";
+import { showAuthToast } from "@/lib/toast-notifications";
 
 interface Personality {
   id: string;
@@ -146,15 +147,36 @@ const Chatboard = () => {
           </div>
 
           <div className="flex items-center gap-3">
+            <Button 
+              variant={user ? "ghost" : "outline"}
+              size="sm" 
+              onClick={async (e) => {
+                e.preventDefault();
+                console.log('🔍 Chatboard: Checking auth for My Conversations...');
+                
+                const { data: { session } } = await supabase.auth.getSession();
+                
+                if (!session) {
+                  console.log('❌ Chatboard: No session - BLOCKING navigation');
+                  console.log('Toast triggered!');
+                  showAuthToast();
+                  setTimeout(() => {
+                    console.log('🔄 Chatboard: Redirecting to auth...');
+                    navigate("/auth");
+                  }, 2000);
+                } else {
+                  console.log('✅ Chatboard: User authenticated - navigating');
+                  navigate("/conversations");
+                }
+              }}
+            >
+              My Conversations
+            </Button>
+            
             {user ? (
-              <>
-                <Button variant="ghost" size="sm" onClick={() => navigate("/conversations")}>
-                  My Conversations
-                </Button>
-                <Button variant="ghost" size="icon" onClick={handleSignOut}>
-                  <LogOut className="w-4 h-4" />
-                </Button>
-              </>
+              <Button variant="ghost" size="icon" onClick={handleSignOut}>
+                <LogOut className="w-4 h-4" />
+              </Button>
             ) : (
               <Button variant="default" size="sm" onClick={() => navigate("/auth")}>
                 Sign In

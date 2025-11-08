@@ -1,4 +1,5 @@
 import { toast as sonnerToast } from 'sonner';
+import { showAuthToast } from './toast-notifications';
 
 /**
  * Toast configuration constants
@@ -146,7 +147,7 @@ export const commonToasts = {
   reconnected: () => toast.success("You're back online"),
   
   // API errors
-  unauthorized: () => toast.error('Please sign in to continue'),
+  unauthorized: () => showAuthToast(),
   forbidden: () => toast.error('Access denied'),
   serverError: () => toast.error('Server error', 'Try again later'),
   rateLimited: () => toast.error('Too many requests', 'Wait a moment and try again'),
