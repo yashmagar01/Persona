@@ -201,7 +201,7 @@ const Auth = () => {
               </div>
               <div className="text-center">
                 <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 bg-clip-text text-transparent">
-                  Historical Chatboard
+                  Persona
                 </h1>
                 <p className="text-gray-400 mt-2 text-lg">Connect with India's greatest minds</p>
               </div>

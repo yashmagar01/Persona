@@ -75,7 +75,7 @@ const Landing = () => {
               style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.7), 0 0 20px rgba(0,0,0,0.5)' }}
             >
               <ShimmeringText 
-                text="Historical Chatboard"
+                text="Persona"
                 duration={3}
                 color="#ffffff"
                 shimmerColor="#fb923c"
@@ -129,7 +129,7 @@ const Landing = () => {
       <section className="py-12 sm:py-16 md:py-20 bg-background">
         <div className="container mx-auto px-4">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-12 sm:mb-16 text-foreground">
-            Why Historical Chatboard?
+            Why Persona?
           </h2>
 
           <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 max-w-5xl mx-auto">
@@ -233,7 +233,7 @@ const Landing = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 mb-6 sm:mb-8">
             {/* About */}
             <div>
-              <h3 className="font-bold text-lg mb-4 text-foreground">Historical Chatboard</h3>
+              <h3 className="font-bold text-lg mb-4 text-foreground">Persona</h3>
               <p className="text-sm text-muted-foreground mb-4">
                 Bringing India's rich history to life through AI-powered conversations with legendary personalities.
               </p>
@@ -326,7 +326,7 @@ const Landing = () => {
           {/* Bottom Bar */}
           <div className="border-t border-border pt-6 sm:pt-8 flex flex-col md:flex-row justify-between items-center gap-3 sm:gap-4">
             <p className="text-xs sm:text-sm text-muted-foreground text-center md:text-left px-2">
-              © 2025 Historical Chatboard. Bringing India's history to life through conversation.
+              © 2025 Persona. Bringing India's history to life through conversation.
             </p>
             <p className="text-xs sm:text-sm text-muted-foreground text-center md:text-right px-2">
               Created by Yash Magar for Skill India Competition

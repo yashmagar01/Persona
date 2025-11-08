@@ -62,7 +62,7 @@ export function Header() {
                 <MessageSquare className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
               </div>
               <span className="text-base sm:text-lg md:text-2xl font-bold text-white truncate max-w-[180px] sm:max-w-none">
-                Historical Chatboard
+                Persona
               </span>
             </Link>
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { LogOut, MessageSquare, Search, User, Info } from "lucide-react";
+import { LogOut, MessageSquare, Search, User, Info, X, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { showAuthToast } from "@/lib/toast-notifications";
 import { PersonalityGridSkeleton } from "@/components/PersonalityCardSkeleton";
@@ -39,7 +39,52 @@ const Chatboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [showAutocomplete, setShowAutocomplete] = useState(false);
+  const [autocompleteResults, setAutocompleteResults] = useState<Personality[]>([]);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const debounceTimerRef = useRef<NodeJS.Timeout>();
   const navigate = useNavigate();
+
+  // Debounced search function
+  const debouncedSearch = useCallback((query: string) => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    debounceTimerRef.current = setTimeout(() => {
+      if (query.trim() === "") {
+        setFilteredPersonalities(personalities);
+        setAutocompleteResults([]);
+        setShowAutocomplete(false);
+      } else {
+        const filtered = personalities.filter((p) =>
+          p.display_name.toLowerCase().includes(query.toLowerCase()) ||
+          p.era.toLowerCase().includes(query.toLowerCase()) ||
+          p.short_bio.toLowerCase().includes(query.toLowerCase()) ||
+          p.values_pillars.some(v => v.toLowerCase().includes(query.toLowerCase()))
+        );
+        setFilteredPersonalities(filtered);
+        setAutocompleteResults(filtered.slice(0, 5)); // Show max 5 results in dropdown
+        setShowAutocomplete(query.trim() !== "");
+      }
+      setSelectedIndex(-1);
+    }, 300);
+  }, [personalities]);
+
+  // Click outside handler
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowAutocomplete(false);
+        setSelectedIndex(-1);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     checkUser();
@@ -49,21 +94,17 @@ const Chatboard = () => {
       setUser(session?.user ?? null);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
   }, []);
 
   useEffect(() => {
-    if (searchQuery.trim() === "") {
-      setFilteredPersonalities(personalities);
-    } else {
-      const filtered = personalities.filter((p) =>
-        p.display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.era.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.short_bio.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setFilteredPersonalities(filtered);
-    }
-  }, [searchQuery, personalities]);
+    debouncedSearch(searchQuery);
+  }, [searchQuery, debouncedSearch]);
 
   const checkUser = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -96,6 +137,70 @@ const Chatboard = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Keyboard navigation handler
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showAutocomplete || autocompleteResults.length === 0) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setSelectedIndex(prev => 
+          prev < autocompleteResults.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setSelectedIndex(prev => prev > 0 ? prev - 1 : -1);
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (selectedIndex >= 0 && selectedIndex < autocompleteResults.length) {
+          const selected = autocompleteResults[selectedIndex];
+          handleSelectPersonality(selected);
+        }
+        break;
+      case 'Escape':
+        setShowAutocomplete(false);
+        setSelectedIndex(-1);
+        break;
+    }
+  };
+
+  // Handle personality selection from autocomplete
+  const handleSelectPersonality = (personality: Personality) => {
+    setSearchQuery(personality.display_name);
+    setShowAutocomplete(false);
+    setSelectedIndex(-1);
+    // Optionally scroll to the card or start chat
+    handleStartChat(personality.id, personality.display_name);
+  };
+
+  // Clear search
+  const handleClearSearch = () => {
+    setSearchQuery("");
+    setShowAutocomplete(false);
+    setSelectedIndex(-1);
+    inputRef.current?.focus();
+  };
+
+  // Highlight matching text
+  const highlightMatch = (text: string, query: string) => {
+    if (!query.trim()) return text;
+    
+    const regex = new RegExp(`(${query})`, 'gi');
+    const parts = text.split(regex);
+    
+    return parts.map((part, index) => 
+      regex.test(part) ? (
+        <mark key={index} className="bg-orange-500/30 text-orange-700 dark:text-orange-300 rounded px-0.5">
+          {part}
+        </mark>
+      ) : (
+        <span key={index}>{part}</span>
+      )
+    );
   };
 
   const handleSignOut = async () => {
@@ -155,7 +260,7 @@ const Chatboard = () => {
           <div className="flex items-center gap-3">
             <MessageSquare className="w-8 h-8 text-primary" />
             <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Historical Chatboard
+              Persona
             </h1>
           </div>
 
@@ -210,16 +315,92 @@ const Chatboard = () => {
             Select a historical personality to begin your conversation and learn from their wisdom
           </p>
 
-          {/* Search */}
-          <div className="max-w-md mx-auto relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-            <Input
-              type="text"
-              placeholder="Search by name, era, or values..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
+          {/* Enhanced Search with Autocomplete */}
+          <div className="max-w-md mx-auto relative" ref={searchRef}>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4 z-10" />
+              <Input
+                ref={inputRef}
+                type="text"
+                placeholder="Search by name, era, or values..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
+                onFocus={() => searchQuery && setShowAutocomplete(true)}
+                className="pl-10 pr-10"
+                autoComplete="off"
+              />
+              {searchQuery && (
+                <button
+                  onClick={handleClearSearch}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors z-10"
+                  aria-label="Clear search"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Autocomplete Dropdown */}
+            {showAutocomplete && (
+              <div className="absolute top-full mt-2 w-full bg-card border border-border rounded-lg shadow-2xl z-50 max-h-80 overflow-y-auto">
+                {autocompleteResults.length > 0 ? (
+                  <div className="py-2">
+                    {autocompleteResults.map((personality, index) => (
+                      <button
+                        key={personality.id}
+                        onClick={() => handleSelectPersonality(personality)}
+                        className={`w-full px-4 py-3 flex items-center gap-3 hover:bg-accent/50 transition-colors text-left ${
+                          selectedIndex === index ? 'bg-accent/50' : ''
+                        }`}
+                        onMouseEnter={() => setSelectedIndex(index)}
+                      >
+                        {/* Avatar */}
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex-shrink-0 overflow-hidden">
+                          {personality.avatar_url ? (
+                            <img 
+                              src={personality.avatar_url} 
+                              alt={personality.display_name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <User className="w-5 h-5 text-white" />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Name and Era */}
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-sm truncate">
+                            {highlightMatch(personality.display_name, searchQuery)}
+                          </div>
+                          <div className="text-xs text-muted-foreground flex items-center gap-1">
+                            <span className="inline-block w-1.5 h-1.5 rounded-full bg-orange-500"></span>
+                            {highlightMatch(personality.era, searchQuery)}
+                          </div>
+                        </div>
+
+                        {/* Arrow indicator */}
+                        {selectedIndex === index && (
+                          <ChevronDown className="w-4 h-4 text-muted-foreground rotate-[-90deg]" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-8 px-4 text-center">
+                    <div className="text-muted-foreground mb-2">
+                      <Search className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm font-medium">No results found</p>
+                      <p className="text-xs mt-1">
+                        Try searching for "Gandhi", "Freedom Fighter", or "1869"
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
