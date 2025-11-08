@@ -55,6 +55,7 @@ const Chat = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [showGuestBanner, setShowGuestBanner] = useState(true);
   const [isBioModalOpen, setIsBioModalOpen] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(true);
   
   // Use draft store for input persistence
   const { draft, setDraft, clearDraft } = useConversationDraft(conversationId || 'temp');
@@ -73,6 +74,13 @@ const Chat = () => {
       fetchMessages();
     }
   }, [conversationId]);
+
+  // Hide suggestions when messages are present
+  useEffect(() => {
+    if (messages.length > 0) {
+      setShowSuggestions(false);
+    }
+  }, [messages.length]);
 
   const fetchConversation = async () => {
     try {
@@ -326,6 +334,78 @@ const Chat = () => {
     ? personality.values_pillars.map(v => String(v))
     : [];
 
+  // Generate conversation starters based on personality
+  const generateConversationStarters = (): string[] => {
+    const name = personality.display_name;
+    const era = personality.era;
+    const values = valuesPillars;
+
+    // Base suggestions that work for most personalities
+    const baseStarters = [
+      `What was life like during ${era}?`,
+      `What inspired your ${values[0] || 'beliefs'}?`,
+      `Can you share a pivotal moment from your life?`,
+      `What advice would you give to today's generation?`,
+    ];
+
+    // Personality-specific starters (can be expanded with more personalities)
+    const specificStarters: { [key: string]: string[] } = {
+      'Mahatma Gandhi': [
+        'What inspired your non-violence philosophy?',
+        'How did Satyagraha transform India?',
+        'What was your relationship with other freedom fighters?',
+        'How did your time in South Africa shape your views?',
+      ],
+      'Bhagat Singh': [
+        'What motivated you to fight for independence?',
+        'How did you develop your revolutionary ideas?',
+        'What message would you give to young revolutionaries?',
+        'Can you tell me about your final days?',
+      ],
+      'Chhatrapati Shivaji': [
+        'How did you build the Maratha Empire?',
+        'What was your strategy against the Mughals?',
+        'How did you treat your subjects and army?',
+        'What inspired your administrative reforms?',
+      ],
+      'Rani Lakshmibai': [
+        'What drove you to lead the 1857 rebellion?',
+        'How did you balance being a queen and warrior?',
+        'What was your training in martial arts like?',
+        'How did you inspire your troops?',
+      ],
+      'Dr. B.R. Ambedkar': [
+        'How did you fight against caste discrimination?',
+        'What was your vision for the Indian Constitution?',
+        'How did education transform your life?',
+        'What inspired your Buddhist conversion?',
+      ],
+      'Swami Vivekananda': [
+        'How did your Chicago speech impact the world?',
+        'What was your relationship with Ramakrishna?',
+        'How can spirituality coexist with modernity?',
+        'What is your message for youth empowerment?',
+      ],
+    };
+
+    // Return specific starters if available, otherwise use base starters
+    return specificStarters[name] || baseStarters;
+  };
+
+  const conversationStarters = generateConversationStarters().slice(0, 4);
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setInput(suggestion);
+    setShowSuggestions(false);
+    // Focus the input field
+    setTimeout(() => {
+      const inputElement = document.querySelector('input[type="text"]') as HTMLInputElement;
+      if (inputElement) {
+        inputElement.focus();
+      }
+    }, 100);
+  };
+
   const handleShareConversation = () => {
     const shareUrl = `${window.location.origin}/chat/${conversationId}`;
     
@@ -527,21 +607,56 @@ const Chat = () => {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
               </div>
             ) : messages.length === 0 ? (
-              <ConversationEmptyState
-                icon={<div className="text-6xl">👋</div>}
-                title={`Welcome to your conversation with ${personality.display_name}!`}
-                description={
-                  conversationId?.startsWith('guest-')
-                    ? "You're chatting as a guest. Start by asking a question or sharing your thoughts!"
-                    : "Your conversation is ready! Ask anything and I'll respond in character."
-                }
-              >
-                <div className="mt-4">
-                  <p className="text-xs text-muted-foreground italic">
-                    💡 Tip: Try asking about my life experiences, values, or era
-                  </p>
-                </div>
-              </ConversationEmptyState>
+              <>
+                <ConversationEmptyState
+                  icon={<div className="text-6xl">👋</div>}
+                  title={`Welcome to your conversation with ${personality.display_name}!`}
+                  description={
+                    conversationId?.startsWith('guest-')
+                      ? "You're chatting as a guest. Start by asking a question or sharing your thoughts!"
+                      : "Your conversation is ready! Ask anything and I'll respond in character."
+                  }
+                >
+                  <div className="mt-4">
+                    <p className="text-xs text-muted-foreground italic">
+                      💡 Tip: Try asking about my life experiences, values, or era
+                    </p>
+                  </div>
+                </ConversationEmptyState>
+
+                {/* Conversation Starter Suggestions */}
+                {showSuggestions && (
+                  <div className="mt-8 space-y-4">
+                    <p className="text-sm font-medium text-muted-foreground text-center">
+                      💬 Suggested questions to get started:
+                    </p>
+                    <div className="flex flex-wrap gap-3 justify-center max-w-3xl mx-auto">
+                      {conversationStarters.map((suggestion, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handleSuggestionClick(suggestion)}
+                          className={cn(
+                            "px-4 py-2.5 rounded-full",
+                            "border-2 border-primary/20 bg-card hover:bg-primary/5",
+                            "text-sm text-foreground",
+                            "transition-all duration-200",
+                            "hover:border-primary/40 hover:scale-105 hover:shadow-md",
+                            "active:scale-95",
+                            "cursor-pointer",
+                            "animate-in fade-in slide-in-from-bottom-2"
+                          )}
+                          style={{
+                            animationDelay: `${index * 100}ms`,
+                            animationFillMode: 'backwards'
+                          }}
+                        >
+                          {suggestion}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="space-y-2">
                 {messages.map((message) => {
@@ -592,6 +707,12 @@ const Chat = () => {
               onChange={(e) => {
                 const newValue = e.target.value;
                 setInput(newValue);
+                
+                // Hide suggestions when user starts typing their own message
+                if (newValue.length > 0 && showSuggestions) {
+                  setShowSuggestions(false);
+                }
+                
                 // Persist draft to store (debounced in real usage)
                 if (conversationId) {
                   setDraft(newValue);
