@@ -790,144 +790,159 @@ const Chat = () => {
         </Conversation>
       </div>
 
-      {/* Enhanced Input Area - Fixed at bottom */}
-      <div className="bg-card border-t border-border flex-shrink-0 sticky bottom-0 z-10 shadow-lg">
-        <div className="container mx-auto px-4 py-3 sm:py-4 max-w-4xl">
+      {/* Grok-style Input Area - Fixed at bottom */}
+      <div className="bg-background/95 backdrop-blur-xl border-t border-border/40 flex-shrink-0 sticky bottom-0 z-10">
+        <div className="container mx-auto px-4 py-4 max-w-4xl">
           <form onSubmit={handleSendMessage} className="space-y-2">
-            <div className="flex gap-2 items-end">
-              {/* Emoji Picker */}
-              <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
-                <PopoverTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-10 w-10 flex-shrink-0 hover:bg-accent transition-colors"
-                    disabled={isLoading}
-                  >
-                    <Smile className="w-5 h-5 text-muted-foreground hover:text-foreground" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80 p-4" align="start">
-                  <div className="space-y-3">
-                    <p className="text-sm font-medium">Select an emoji</p>
-                    <div className="grid grid-cols-8 gap-2">
-                      {['😀', '😊', '😂', '🤔', '👍', '❤️', '🎉', '🙏', '👏', '💪', '🔥', '⭐', '✨', '🌟', '💯', '🎯', 
-                        '📚', '✍️', '🤝', '🌈', '🙌', '💡', '🎓', '🏆', '🎨', '🌸', '🌺', '🌻', '🌹', '🌷', '🌱', '🍀'].map((emoji) => (
-                        <button
-                          key={emoji}
-                          type="button"
-                          onClick={() => handleEmojiSelect(emoji)}
-                          className="text-2xl hover:scale-125 transition-transform p-1 hover:bg-accent rounded"
-                        >
-                          {emoji}
-                        </button>
-                      ))}
+            {/* Main Input Container - Grok Style */}
+            <div className={cn(
+              "relative rounded-3xl bg-card border transition-all duration-200",
+              "hover:border-border",
+              input.length > 0 ? "border-orange-500/50 shadow-[0_0_0_3px_rgba(249,115,22,0.1)]" : "border-border/60"
+            )}>
+              {/* Input Row */}
+              <div className="flex items-end gap-2 px-4 py-3">
+                {/* Emoji Picker Button */}
+                <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className="flex-shrink-0 p-2 hover:bg-accent rounded-full transition-colors disabled:opacity-50"
+                      disabled={isLoading}
+                    >
+                      <Smile className="w-5 h-5 text-muted-foreground" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 p-4" align="start" side="top">
+                    <div className="space-y-3">
+                      <p className="text-sm font-medium">Select an emoji</p>
+                      <div className="grid grid-cols-8 gap-2">
+                        {['😀', '😊', '😂', '🤔', '👍', '❤️', '🎉', '🙏', '👏', '💪', '🔥', '⭐', '✨', '🌟', '💯', '🎯', 
+                          '📚', '✍️', '🤝', '🌈', '🙌', '💡', '🎓', '🏆', '🎨', '🌸', '🌺', '🌻', '🌹', '🌷', '🌱', '🍀'].map((emoji) => (
+                          <button
+                            key={emoji}
+                            type="button"
+                            onClick={() => handleEmojiSelect(emoji)}
+                            className="text-2xl hover:scale-125 transition-transform p-1 hover:bg-accent rounded"
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
+                  </PopoverContent>
+                </Popover>
 
-              {/* Auto-resize Textarea with Focus Glow */}
-              <div className="relative flex-1">
-                <Textarea
-                  ref={textareaRef}
-                  value={input}
-                  onChange={(e) => {
-                    const newValue = e.target.value;
-                    
-                    // Enforce character limit
-                    if (newValue.length <= MAX_CHARS) {
-                      setInput(newValue);
+                {/* Auto-resize Textarea */}
+                <div className="relative flex-1">
+                  <textarea
+                    ref={textareaRef}
+                    value={input}
+                    onChange={(e) => {
+                      const newValue = e.target.value;
                       
-                      // Hide suggestions when user starts typing their own message
-                      if (newValue.length > 0 && showSuggestions) {
-                        setShowSuggestions(false);
+                      // Enforce character limit
+                      if (newValue.length <= MAX_CHARS) {
+                        setInput(newValue);
+                        
+                        // Hide suggestions when user starts typing
+                        if (newValue.length > 0 && showSuggestions) {
+                          setShowSuggestions(false);
+                        }
+                        
+                        // Persist draft
+                        if (conversationId) {
+                          setDraft(newValue);
+                        }
                       }
-                      
-                      // Persist draft to store
-                      if (conversationId) {
-                        setDraft(newValue);
+                    }}
+                    onKeyDown={(e) => {
+                      // Submit on Enter, new line on Shift+Enter
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        if (input.trim()) {
+                          handleSendMessage(e as any);
+                        }
                       }
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    // Submit on Enter, new line on Shift+Enter
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      if (input.trim()) {
-                        handleSendMessage(e as any);
-                      }
-                    }
-                  }}
-                  placeholder="Type your message..."
-                  disabled={isLoading}
-                  className={cn(
-                    "min-h-[40px] max-h-[96px] resize-none py-3 pr-12 transition-all duration-200",
-                    "focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2",
-                    "focus-visible:border-orange-500 focus-visible:shadow-[0_0_10px_rgba(249,115,22,0.3)]"
+                    }}
+                    placeholder="What do you want to know?"
+                    disabled={isLoading}
+                    className={cn(
+                      "w-full bg-transparent resize-none outline-none",
+                      "text-sm placeholder:text-muted-foreground",
+                      "min-h-[24px] max-h-[96px] py-0.5",
+                      "disabled:opacity-50"
+                    )}
+                    rows={1}
+                    style={{ scrollbarWidth: 'thin' }}
+                  />
+                  
+                  {/* Character Counter */}
+                  {input.length > 0 && (
+                    <div className={cn(
+                      "absolute -bottom-5 right-0 text-xs transition-colors",
+                      input.length >= MAX_CHARS * 0.9 ? "text-orange-500 font-semibold" : "text-muted-foreground/60"
+                    )}>
+                      {input.length}/{MAX_CHARS}
+                    </div>
                   )}
-                  autoComplete="off"
-                  rows={1}
-                />
-                
-                {/* Character Counter */}
-                {input.length > 0 && (
-                  <div className={cn(
-                    "absolute bottom-2 right-2 text-xs transition-colors",
-                    input.length >= MAX_CHARS * 0.9 ? "text-orange-500 font-semibold" : "text-muted-foreground"
-                  )}>
-                    {input.length}/{MAX_CHARS}
-                  </div>
-                )}
+                </div>
+
+                {/* Voice Input Button */}
+                <button
+                  type="button"
+                  onClick={handleVoiceInput}
+                  className={cn(
+                    "flex-shrink-0 p-2 rounded-full transition-all duration-200 disabled:opacity-50",
+                    isRecording 
+                      ? "bg-green-500/10 hover:bg-green-500/20" 
+                      : "hover:bg-accent"
+                  )}
+                  disabled={isLoading}
+                >
+                  {isRecording ? (
+                    <div className="relative">
+                      <Mic className="w-5 h-5 text-green-500" />
+                      <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                    </div>
+                  ) : (
+                    <Mic className="w-5 h-5 text-muted-foreground" />
+                  )}
+                </button>
+
+                {/* Send Button - Grok Style */}
+                <button
+                  type="submit"
+                  disabled={isLoading || !input.trim()}
+                  className={cn(
+                    "flex-shrink-0 p-2.5 rounded-full transition-all duration-200",
+                    "disabled:opacity-40 disabled:cursor-not-allowed",
+                    input.trim() && !isLoading
+                      ? "bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 hover:scale-105 active:scale-95"
+                      : "bg-muted text-muted-foreground"
+                  )}
+                >
+                  {isLoading ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Send className="w-5 h-5" />
+                  )}
+                </button>
               </div>
-
-              {/* Voice Input Button */}
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={handleVoiceInput}
-                className={cn(
-                  "h-10 w-10 flex-shrink-0 hover:bg-accent transition-all duration-200",
-                  isRecording && "bg-red-500/10 hover:bg-red-500/20 animate-pulse"
-                )}
-                disabled={isLoading}
-              >
-                {isRecording ? (
-                  <MicOff className="w-5 h-5 text-red-500" />
-                ) : (
-                  <Mic className="w-5 h-5 text-muted-foreground hover:text-foreground" />
-                )}
-              </Button>
-
-              {/* Send Button - Always enabled when text exists */}
-              <Button 
-                type="submit" 
-                disabled={isLoading || !input.trim()}
-                size="icon"
-                className={cn(
-                  "h-10 w-10 flex-shrink-0 transition-all duration-200",
-                  input.trim() && !isLoading && "bg-orange-500 hover:bg-orange-600 hover:scale-105 active:scale-95"
-                )}
-              >
-                {isLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Send className="w-4 h-4" />
-                )}
-              </Button>
             </div>
 
-            {/* Hint Text */}
-            <div className="flex items-center justify-between px-1">
-              <p className="text-xs text-muted-foreground">
-                Press <kbd className="px-1.5 py-0.5 text-xs font-semibold bg-muted border border-border rounded">Enter</kbd> to send, 
-                <kbd className="ml-1 px-1.5 py-0.5 text-xs font-semibold bg-muted border border-border rounded">Shift+Enter</kbd> for new line
+            {/* Bottom Hints Row */}
+            <div className="flex items-center justify-between px-2">
+              <p className="text-xs text-muted-foreground/60">
+                Press <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-muted/50 border border-border/50 rounded">Enter</kbd> to send, 
+                <kbd className="ml-1 px-1.5 py-0.5 text-[10px] font-mono bg-muted/50 border border-border/50 rounded">Shift+Enter</kbd> for new line
               </p>
               {isRecording && (
-                <p className="text-xs text-red-500 font-medium flex items-center gap-1">
-                  <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                <p className="text-xs text-green-500 font-medium flex items-center gap-1.5">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                  </span>
                   Recording...
                 </p>
               )}
