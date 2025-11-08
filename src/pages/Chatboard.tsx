@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { LogOut, MessageSquare, Search, User } from "lucide-react";
 import { toast } from "sonner";
 import { showAuthToast } from "@/lib/toast-notifications";
+import { PersonalityGridSkeleton } from "@/components/PersonalityCardSkeleton";
 
 interface Personality {
   id: string;
@@ -212,10 +213,7 @@ const Chatboard = () => {
 
         {/* Personalities Grid */}
         {isLoading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-4 text-muted-foreground">Loading personalities...</p>
-          </div>
+          <PersonalityGridSkeleton count={6} />
         ) : filteredPersonalities.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">No personalities found matching your search.</p>
