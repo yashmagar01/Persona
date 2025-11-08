@@ -7,9 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Send, Loader2, User, Info, Share2, X, Smile, Mic, Paperclip } from "lucide-react";
+import { ArrowLeft, Send, Loader2, User, Info, Share2, X, Mic, Paperclip } from "lucide-react";
 import { toast } from "sonner";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { generatePersonalityResponse, isGeminiConfigured } from "@/lib/gemini";
 import { Message, MessageAvatar, MessageContent } from "@/components/ui/message";
 import { Conversation, ConversationContent, ConversationEmptyState, ConversationScrollButton } from "@/components/ui/conversation";
@@ -59,7 +58,6 @@ const Chat = () => {
   const [isBioModalOpen, setIsBioModalOpen] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
   // Use draft store for input persistence
@@ -420,14 +418,6 @@ const Chat = () => {
         textareaRef.current.focus();
       }
     }, 100);
-  };
-
-  const handleEmojiSelect = (emoji: string) => {
-    setInput(prev => prev + emoji);
-    setShowEmojiPicker(false);
-    if (textareaRef.current) {
-      textareaRef.current.focus();
-    }
   };
 
   const handleFileUpload = () => {
@@ -827,38 +817,6 @@ const Chat = () => {
                   <Paperclip className="w-5 h-5 text-muted-foreground" />
                 </button>
 
-                {/* Emoji Picker Button */}
-                <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
-                  <PopoverTrigger asChild>
-                    <button
-                      type="button"
-                      className="flex-shrink-0 p-2 hover:bg-accent rounded-full transition-colors disabled:opacity-50"
-                      disabled={isLoading}
-                      title="Add emoji"
-                    >
-                      <Smile className="w-5 h-5 text-muted-foreground" />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80 p-4" align="start" side="top">
-                    <div className="space-y-3">
-                      <p className="text-sm font-medium">Select an emoji</p>
-                      <div className="grid grid-cols-8 gap-2">
-                        {['😀', '😊', '😂', '🤔', '👍', '❤️', '🎉', '🙏', '👏', '💪', '🔥', '⭐', '✨', '🌟', '💯', '🎯', 
-                          '📚', '✍️', '🤝', '🌈', '🙌', '💡', '🎓', '🏆', '🎨', '🌸', '🌺', '🌻', '🌹', '🌷', '🌱', '🍀'].map((emoji) => (
-                          <button
-                            key={emoji}
-                            type="button"
-                            onClick={() => handleEmojiSelect(emoji)}
-                            className="text-2xl hover:scale-125 transition-transform p-1 hover:bg-accent rounded"
-                          >
-                            {emoji}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-
                 {/* Auto-resize Textarea */}
                 <div className="relative flex-1">
                   <textarea
@@ -957,24 +915,6 @@ const Chat = () => {
                   )}
                 </button>
               </div>
-            </div>
-
-            {/* Bottom Hints Row */}
-            <div className="flex items-center justify-between px-2">
-              {!isRecording ? (
-                <p className="text-xs text-muted-foreground/60">
-                  Press <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-muted/50 border border-border/50 rounded">Enter</kbd> to send, 
-                  <kbd className="ml-1 px-1.5 py-0.5 text-[10px] font-mono bg-muted/50 border border-border/50 rounded">Shift+Enter</kbd> for new line
-                </p>
-              ) : (
-                <p className="text-xs text-foreground font-medium flex items-center gap-2">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                  </span>
-                  Recording... Click to stop
-                </p>
-              )}
             </div>
           </form>
         </div>
