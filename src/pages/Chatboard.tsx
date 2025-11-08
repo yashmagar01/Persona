@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, MessageSquare, Search, User } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { LogOut, MessageSquare, Search, User, Info } from "lucide-react";
 import { toast } from "sonner";
 import { showAuthToast } from "@/lib/toast-notifications";
 import { PersonalityGridSkeleton } from "@/components/PersonalityCardSkeleton";
@@ -20,6 +21,17 @@ interface Personality {
   values_pillars: string[];
   avatar_url: string | null;
 }
+
+// Helper function to get badge color variant based on index
+const getBadgeColorClass = (index: number) => {
+  const colors = [
+    "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20 hover:bg-green-500/20", // Primary
+    "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20 hover:bg-green-500/20", // Primary
+    "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20 hover:bg-blue-500/20",     // Secondary
+    "bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20 hover:bg-purple-500/20" // Tertiary
+  ];
+  return colors[index] || colors[colors.length - 1];
+};
 
 const Chatboard = () => {
   const [personalities, setPersonalities] = useState<Personality[]>([]);
@@ -254,13 +266,57 @@ const Chatboard = () => {
                   </p>
 
                   {personality.values_pillars && personality.values_pillars.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {personality.values_pillars.slice(0, 3).map((value, index) => (
-                        <Badge key={index} variant="secondary" className="text-xs">
-                          {value}
-                        </Badge>
-                      ))}
-                    </div>
+                    <TooltipProvider>
+                      <div className="flex flex-wrap gap-1.5">
+                        {/* Show top 3-4 values */}
+                        {personality.values_pillars.slice(0, 4).map((value, index) => (
+                          <Tooltip key={index} delayDuration={200}>
+                            <TooltipTrigger asChild>
+                              <Badge 
+                                variant="secondary" 
+                                className={`text-xs cursor-pointer transition-all duration-200 ${getBadgeColorClass(index)}`}
+                              >
+                                {value}
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-xs">
+                              <p className="text-xs font-medium">{value}</p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Core value of {personality.display_name}
+                              </p>
+                            </TooltipContent>
+                          </Tooltip>
+                        ))}
+                        
+                        {/* Show "+X more" badge if there are additional values */}
+                        {personality.values_pillars.length > 4 && (
+                          <Tooltip delayDuration={200}>
+                            <TooltipTrigger asChild>
+                              <Badge 
+                                variant="secondary" 
+                                className="text-xs cursor-pointer bg-gray-500/10 text-gray-700 dark:text-gray-400 border-gray-500/20 hover:bg-gray-500/20 transition-all duration-200"
+                              >
+                                <Info className="w-3 h-3 mr-1" />
+                                +{personality.values_pillars.length - 4} more
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-xs">
+                              <p className="text-xs font-semibold mb-2">All Values:</p>
+                              <div className="flex flex-wrap gap-1">
+                                {personality.values_pillars.map((value, idx) => (
+                                  <span 
+                                    key={idx}
+                                    className="text-xs bg-background px-2 py-1 rounded-md border"
+                                  >
+                                    {value}
+                                  </span>
+                                ))}
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                      </div>
+                    </TooltipProvider>
                   )}
 
                   <Button 
