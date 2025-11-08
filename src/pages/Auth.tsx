@@ -188,25 +188,27 @@ const Auth = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-orange-900/10 via-transparent to-purple-900/10" />
       </div>
 
-      <div className="relative z-10 w-full max-w-6xl">
-        {/* Logo at Top Center */}
-        <div className="flex flex-col items-center justify-center mb-8 space-y-4">
-          <div className="flex items-center space-x-3 group">
-            <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-4 rounded-2xl shadow-2xl shadow-orange-500/30 transition-transform duration-300 group-hover:scale-105">
-              <MessageSquare className="h-10 w-10 text-white" />
+      <div className="relative z-10 w-full max-w-7xl">
+        <div className="grid lg:grid-cols-[60%_40%] gap-0 min-h-screen lg:min-h-0">
+          {/* LEFT COLUMN - Auth Form Section (60%) */}
+          <div className="flex flex-col justify-center p-6 lg:p-12 lg:pr-8">
+            {/* Logo at Top Center */}
+            <div className="flex flex-col items-center justify-center mb-8 space-y-4">
+              <div className="flex items-center space-x-3 group">
+                <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-4 rounded-2xl shadow-2xl shadow-orange-500/30 transition-transform duration-300 group-hover:scale-105">
+                  <MessageSquare className="h-10 w-10 text-white" />
+                </div>
+              </div>
+              <div className="text-center">
+                <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 bg-clip-text text-transparent">
+                  Historical Chatboard
+                </h1>
+                <p className="text-gray-400 mt-2 text-lg">Connect with India's greatest minds</p>
+              </div>
             </div>
-          </div>
-          <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 bg-clip-text text-transparent">
-              Historical Chatboard
-            </h1>
-            <p className="text-gray-400 mt-2 text-lg">Connect with India's greatest minds</p>
-          </div>
-        </div>
 
-        <div className="grid lg:grid-cols-2 gap-8 items-start">
-          {/* Auth Form Section */}
-          <Card className="shadow-2xl border-gray-800/50 bg-gray-900/80 backdrop-blur-xl">
+            {/* Auth Form Card */}
+            <Card className="shadow-2xl border-gray-800/50 bg-gray-900/80 backdrop-blur-xl max-w-xl mx-auto w-full">
           <CardHeader className="space-y-4">
             {/* Inline Messaging */}
             <div className="p-4 rounded-lg bg-gradient-to-r from-orange-500/10 to-orange-600/10 border border-orange-500/20">
@@ -455,71 +457,76 @@ const Auth = () => {
           </CardContent>
         </Card>
 
-          {/* Benefits Sidebar */}
-          <Card className="shadow-2xl border-gray-800/50 bg-gray-900/80 backdrop-blur-xl lg:sticky lg:top-24">
-            <CardHeader>
-              <CardTitle className="text-2xl flex items-center gap-2 text-white">
-                <Sparkles className="h-6 w-6 text-orange-500" />
-                Why Sign Up?
-              </CardTitle>
-              <CardDescription className="text-gray-400">
-                Unlock the full experience and save your journey through history
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Benefit 1 - Save Conversations */}
-              <div className="group flex items-start gap-4 p-5 rounded-xl bg-gray-800/40 backdrop-blur-sm border border-gray-700/50 hover:border-orange-500/40 hover:bg-gray-800/60 transition-all duration-300 cursor-default">
-                <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/20 group-hover:shadow-orange-500/40 transition-shadow duration-300">
-                  <MessageSquare className="h-7 w-7 text-white" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-white mb-2 text-lg">Save Conversations</h3>
-                  <p className="text-sm text-gray-400 leading-relaxed">
-                    Never lose a meaningful dialogue. All your conversations are securely saved and accessible anytime.
-                  </p>
-                </div>
-              </div>
+          </div>
 
-              {/* Benefit 2 - Access History */}
-              <div className="group flex items-start gap-4 p-5 rounded-xl bg-gray-800/40 backdrop-blur-sm border border-gray-700/50 hover:border-orange-500/40 hover:bg-gray-800/60 transition-all duration-300 cursor-default">
-                <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/20 group-hover:shadow-orange-500/40 transition-shadow duration-300">
-                  <History className="h-7 w-7 text-white" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-white mb-2 text-lg">Access History</h3>
-                  <p className="text-sm text-gray-400 leading-relaxed">
-                    Revisit past conversations and continue where you left off. Your entire chat history at your fingertips.
-                  </p>
-                </div>
-              </div>
-
-              {/* Benefit 3 - Personalized Experience */}
-              <div className="group flex items-start gap-4 p-5 rounded-xl bg-gray-800/40 backdrop-blur-sm border border-gray-700/50 hover:border-orange-500/40 hover:bg-gray-800/60 transition-all duration-300 cursor-default">
-                <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/20 group-hover:shadow-orange-500/40 transition-shadow duration-300">
-                  <Sparkles className="h-7 w-7 text-white" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-white mb-2 text-lg">Personalized Experience</h3>
-                  <p className="text-sm text-gray-400 leading-relaxed">
-                    Get tailored recommendations and a customized interface that adapts to your interests.
-                  </p>
-                </div>
-              </div>
-
-              {/* Call to Action Banner */}
-              <div className="mt-4 p-5 rounded-xl bg-gradient-to-r from-orange-500/20 via-orange-600/15 to-orange-500/20 border border-orange-500/30 backdrop-blur-sm">
-                <div className="flex items-center justify-center gap-2">
-                  <Shield className="h-5 w-5 text-orange-400" />
-                  <p className="text-sm text-center text-orange-100 font-medium">
-                    Secure • Private • Always Available
-                  </p>
-                </div>
-                <p className="text-xs text-center text-gray-400 mt-2">
-                  Join thousands exploring history through conversation 🚀
+          {/* RIGHT COLUMN - Benefits Sidebar (40%) */}
+          <div className="hidden lg:flex flex-col justify-center p-12 pl-8 border-l border-gray-800/50 relative">
+            <div className="sticky top-24">
+              <div className="mb-8">
+                <h2 className="text-3xl font-bold text-white mb-2 flex items-center gap-2">
+                  <Sparkles className="h-8 w-8 text-orange-500" />
+                  Why Sign Up?
+                </h2>
+                <p className="text-gray-400">
+                  Unlock the full experience and save your journey through history
                 </p>
               </div>
-            </CardContent>
-          </Card>
+
+              <div className="space-y-6">
+                {/* Benefit 1 - Save Conversations */}
+                <div className="group flex items-start gap-4 p-5 rounded-xl bg-gray-800/40 backdrop-blur-sm border border-gray-700/50 hover:border-orange-500/40 hover:bg-gray-800/60 transition-all duration-300 cursor-default">
+                  <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/20 group-hover:shadow-orange-500/40 transition-shadow duration-300">
+                    <MessageSquare className="h-7 w-7 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-white mb-2 text-lg">Save Conversations</h3>
+                    <p className="text-sm text-gray-400 leading-relaxed">
+                      Never lose a meaningful dialogue. All your conversations are securely saved and accessible anytime.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Benefit 2 - Access History */}
+                <div className="group flex items-start gap-4 p-5 rounded-xl bg-gray-800/40 backdrop-blur-sm border border-gray-700/50 hover:border-orange-500/40 hover:bg-gray-800/60 transition-all duration-300 cursor-default">
+                  <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/20 group-hover:shadow-orange-500/40 transition-shadow duration-300">
+                    <History className="h-7 w-7 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-white mb-2 text-lg">Access History</h3>
+                    <p className="text-sm text-gray-400 leading-relaxed">
+                      Revisit past conversations and continue where you left off. Your entire chat history at your fingertips.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Benefit 3 - Personalized Experience */}
+                <div className="group flex items-start gap-4 p-5 rounded-xl bg-gray-800/40 backdrop-blur-sm border border-gray-700/50 hover:border-orange-500/40 hover:bg-gray-800/60 transition-all duration-300 cursor-default">
+                  <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/20 group-hover:shadow-orange-500/40 transition-shadow duration-300">
+                    <Sparkles className="h-7 w-7 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-white mb-2 text-lg">Personalized Experience</h3>
+                    <p className="text-sm text-gray-400 leading-relaxed">
+                      Get tailored recommendations and a customized interface that adapts to your interests.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Call to Action Banner */}
+                <div className="mt-4 p-5 rounded-xl bg-gradient-to-r from-orange-500/20 via-orange-600/15 to-orange-500/20 border border-orange-500/30 backdrop-blur-sm">
+                  <div className="flex items-center justify-center gap-2">
+                    <Shield className="h-5 w-5 text-orange-400" />
+                    <p className="text-sm text-center text-orange-100 font-medium">
+                      Secure • Private • Always Available
+                    </p>
+                  </div>
+                  <p className="text-xs text-center text-gray-400 mt-2">
+                    Join thousands exploring history through conversation 🚀
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
