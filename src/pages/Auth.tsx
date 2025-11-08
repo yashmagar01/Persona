@@ -172,44 +172,95 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted to-background flex items-center justify-center p-4">
-      <div className="w-full max-w-6xl">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            Historical Chatboard
-          </h1>
-          <p className="text-muted-foreground mt-2">Connect with India's greatest minds</p>
+    <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
+      {/* Background Pattern - Subtle Indian Architecture Motifs */}
+      <div className="absolute inset-0 bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
+        {/* Decorative Pattern Overlay */}
+        <div 
+          className="absolute inset-0 opacity-5"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 30-30 30L0 30 30 0zm0 10L10 30l20 20 20-20-20-20z' fill='%23ff6b35' fill-opacity='1' fill-rule='evenodd'/%3E%3C/svg%3E")`,
+            backgroundSize: '60px 60px'
+          }}
+        />
+        {/* Gradient Overlays */}
+        <div className="absolute inset-0 bg-gradient-to-t from-orange-950/20 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-900/10 via-transparent to-purple-900/10" />
+      </div>
+
+      <div className="relative z-10 w-full max-w-6xl">
+        {/* Logo at Top Center */}
+        <div className="flex flex-col items-center justify-center mb-8 space-y-4">
+          <div className="flex items-center space-x-3 group">
+            <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-4 rounded-2xl shadow-2xl shadow-orange-500/30 transition-transform duration-300 group-hover:scale-105">
+              <MessageSquare className="h-10 w-10 text-white" />
+            </div>
+          </div>
+          <div className="text-center">
+            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 bg-clip-text text-transparent">
+              Historical Chatboard
+            </h1>
+            <p className="text-gray-400 mt-2 text-lg">Connect with India's greatest minds</p>
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8 items-start">
           {/* Auth Form Section */}
-          <Card className="shadow-xl border-border">
-          <CardHeader>
-            <CardTitle>Welcome</CardTitle>
-            <CardDescription>Sign in or create an account to start your journey</CardDescription>
+          <Card className="shadow-2xl border-gray-800/50 bg-gray-900/80 backdrop-blur-xl">
+          <CardHeader className="space-y-4">
+            {/* Inline Messaging */}
+            <div className="p-4 rounded-lg bg-gradient-to-r from-orange-500/10 to-orange-600/10 border border-orange-500/20">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 mt-0.5">
+                  <Shield className="h-5 w-5 text-orange-500" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-orange-400">Sign in to unlock all features</p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Access your saved conversations, personalized experience, and complete chat history
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <CardTitle className="text-2xl text-white">Welcome</CardTitle>
+              <CardDescription className="text-gray-400">Sign in or create an account to start your journey</CardDescription>
+            </div>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="signin" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="signin">Sign In</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 bg-gray-800/50 border border-gray-700/50">
+                <TabsTrigger 
+                  value="signin"
+                  className="data-[state=active]:bg-orange-500 data-[state=active]:text-white"
+                >
+                  Sign In
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="signup"
+                  className="data-[state=active]:bg-orange-500 data-[state=active]:text-white"
+                >
+                  Sign Up
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="signin">
-                <form onSubmit={handleSignIn} className="space-y-4">
+                <form onSubmit={handleSignIn} className="space-y-5 mt-6">
                   <div className="space-y-2">
-                    <Label htmlFor="signin-email">Email</Label>
+                    <Label htmlFor="signin-email" className="text-gray-200">Email</Label>
                     <Input
                       id="signin-email"
                       type="email"
                       placeholder="your.email@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
+                      className="bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-orange-500 focus:ring-orange-500"
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signin-password">Password</Label>
+                    <Label htmlFor="signin-password" className="text-gray-200">Password</Label>
                     <div className="relative">
                       <Input
                         id="signin-password"
@@ -217,18 +268,23 @@ const Auth = () => {
                         placeholder="Enter your password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        className="bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-orange-500 focus:ring-orange-500"
                         required
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
                       >
                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
                     </div>
                   </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 transition-all duration-300" 
+                    disabled={isLoading}
+                  >
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -242,17 +298,17 @@ const Auth = () => {
 
                 <div className="relative my-6">
                   <div className="absolute inset-0 flex items-center">
-                    <Separator className="w-full" />
+                    <Separator className="bg-gray-700" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+                    <span className="bg-gray-900 px-3 text-gray-400">Or continue with</span>
                   </div>
                 </div>
 
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full"
+                  className="w-full bg-gray-800/50 border-gray-700 text-gray-200 hover:bg-gray-800 hover:text-white hover:border-orange-500/50 transition-all duration-300"
                   onClick={handleGoogleSignIn}
                   disabled={isLoading}
                 >
@@ -283,30 +339,32 @@ const Auth = () => {
               </TabsContent>
 
               <TabsContent value="signup">
-                <form onSubmit={handleSignUp} className="space-y-4">
+                <form onSubmit={handleSignUp} className="space-y-5 mt-6">
                   <div className="space-y-2">
-                    <Label htmlFor="signup-name">Full Name (Optional)</Label>
+                    <Label htmlFor="signup-name" className="text-gray-200">Full Name (Optional)</Label>
                     <Input
                       id="signup-name"
                       type="text"
                       placeholder="Your name"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
+                      className="bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-orange-500 focus:ring-orange-500"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
+                    <Label htmlFor="signup-email" className="text-gray-200">Email</Label>
                     <Input
                       id="signup-email"
                       type="email"
                       placeholder="your.email@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
+                      className="bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-orange-500 focus:ring-orange-500"
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password</Label>
+                    <Label htmlFor="signup-password" className="text-gray-200">Password</Label>
                     <div className="relative">
                       <Input
                         id="signup-password"
@@ -314,18 +372,23 @@ const Auth = () => {
                         placeholder="Create a password (min. 6 characters)"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        className="bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-orange-500 focus:ring-orange-500"
                         required
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
                       >
                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
                     </div>
                   </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 transition-all duration-300" 
+                    disabled={isLoading}
+                  >
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -339,17 +402,17 @@ const Auth = () => {
 
                 <div className="relative my-6">
                   <div className="absolute inset-0 flex items-center">
-                    <Separator className="w-full" />
+                    <Separator className="bg-gray-700" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+                    <span className="bg-gray-900 px-3 text-gray-400">Or continue with</span>
                   </div>
                 </div>
 
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full"
+                  className="w-full bg-gray-800/50 border-gray-700 text-gray-200 hover:bg-gray-800 hover:text-white hover:border-orange-500/50 transition-all duration-300"
                   onClick={handleGoogleSignIn}
                   disabled={isLoading}
                 >
@@ -380,85 +443,78 @@ const Auth = () => {
               </TabsContent>
             </Tabs>
 
-            <div className="mt-6 text-center">
+            <div className="mt-6 pt-4 border-t border-gray-700/50 text-center">
               <Button
                 variant="link"
                 onClick={() => navigate("/chatboard")}
-                className="text-sm"
+                className="text-sm text-gray-400 hover:text-orange-400 transition-colors"
               >
-                Continue as Guest
+                Continue as Guest →
               </Button>
             </div>
           </CardContent>
         </Card>
 
           {/* Benefits Sidebar */}
-          <Card className="shadow-xl border-border bg-gradient-to-br from-orange-500/10 via-orange-600/5 to-background lg:sticky lg:top-24">
+          <Card className="shadow-2xl border-gray-800/50 bg-gray-900/80 backdrop-blur-xl lg:sticky lg:top-24">
             <CardHeader>
-              <CardTitle className="text-2xl flex items-center gap-2">
+              <CardTitle className="text-2xl flex items-center gap-2 text-white">
                 <Sparkles className="h-6 w-6 text-orange-500" />
                 Why Sign Up?
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-gray-400">
                 Unlock the full experience and save your journey through history
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Benefit 1 */}
-              <div className="flex items-start gap-4 p-4 rounded-lg bg-background/50 backdrop-blur-sm border border-border/50 hover:border-orange-500/30 transition-colors duration-200">
-                <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg">
-                  <MessageSquare className="h-6 w-6 text-white" />
+              {/* Benefit 1 - Save Conversations */}
+              <div className="group flex items-start gap-4 p-5 rounded-xl bg-gray-800/40 backdrop-blur-sm border border-gray-700/50 hover:border-orange-500/40 hover:bg-gray-800/60 transition-all duration-300 cursor-default">
+                <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/20 group-hover:shadow-orange-500/40 transition-shadow duration-300">
+                  <MessageSquare className="h-7 w-7 text-white" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-foreground mb-1">Save Your Conversations</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <h3 className="font-semibold text-white mb-2 text-lg">Save Conversations</h3>
+                  <p className="text-sm text-gray-400 leading-relaxed">
                     Never lose a meaningful dialogue. All your conversations are securely saved and accessible anytime.
                   </p>
                 </div>
               </div>
 
-              {/* Benefit 2 */}
-              <div className="flex items-start gap-4 p-4 rounded-lg bg-background/50 backdrop-blur-sm border border-border/50 hover:border-orange-500/30 transition-colors duration-200">
-                <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg">
-                  <History className="h-6 w-6 text-white" />
+              {/* Benefit 2 - Access History */}
+              <div className="group flex items-start gap-4 p-5 rounded-xl bg-gray-800/40 backdrop-blur-sm border border-gray-700/50 hover:border-orange-500/40 hover:bg-gray-800/60 transition-all duration-300 cursor-default">
+                <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/20 group-hover:shadow-orange-500/40 transition-shadow duration-300">
+                  <History className="h-7 w-7 text-white" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-foreground mb-1">Access Chat History</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <h3 className="font-semibold text-white mb-2 text-lg">Access History</h3>
+                  <p className="text-sm text-gray-400 leading-relaxed">
                     Revisit past conversations and continue where you left off. Your entire chat history at your fingertips.
                   </p>
                 </div>
               </div>
 
-              {/* Benefit 3 */}
-              <div className="flex items-start gap-4 p-4 rounded-lg bg-background/50 backdrop-blur-sm border border-border/50 hover:border-orange-500/30 transition-colors duration-200">
-                <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg">
-                  <Sparkles className="h-6 w-6 text-white" />
+              {/* Benefit 3 - Personalized Experience */}
+              <div className="group flex items-start gap-4 p-5 rounded-xl bg-gray-800/40 backdrop-blur-sm border border-gray-700/50 hover:border-orange-500/40 hover:bg-gray-800/60 transition-all duration-300 cursor-default">
+                <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/20 group-hover:shadow-orange-500/40 transition-shadow duration-300">
+                  <Sparkles className="h-7 w-7 text-white" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-foreground mb-1">Personalized Experience</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <h3 className="font-semibold text-white mb-2 text-lg">Personalized Experience</h3>
+                  <p className="text-sm text-gray-400 leading-relaxed">
                     Get tailored recommendations and a customized interface that adapts to your interests.
                   </p>
                 </div>
               </div>
 
-              {/* Benefit 4 */}
-              <div className="flex items-start gap-4 p-4 rounded-lg bg-background/50 backdrop-blur-sm border border-border/50 hover:border-orange-500/30 transition-colors duration-200">
-                <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg">
-                  <Shield className="h-6 w-6 text-white" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-foreground mb-1">Secure Your Progress</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Your data is encrypted and protected. Sign in from any device and your progress is always safe.
+              {/* Call to Action Banner */}
+              <div className="mt-4 p-5 rounded-xl bg-gradient-to-r from-orange-500/20 via-orange-600/15 to-orange-500/20 border border-orange-500/30 backdrop-blur-sm">
+                <div className="flex items-center justify-center gap-2">
+                  <Shield className="h-5 w-5 text-orange-400" />
+                  <p className="text-sm text-center text-orange-100 font-medium">
+                    Secure • Private • Always Available
                   </p>
                 </div>
-              </div>
-
-              {/* Call to Action */}
-              <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-orange-500/20 to-orange-600/20 border border-orange-500/30">
-                <p className="text-sm text-center text-foreground font-medium">
+                <p className="text-xs text-center text-gray-400 mt-2">
                   Join thousands exploring history through conversation 🚀
                 </p>
               </div>
