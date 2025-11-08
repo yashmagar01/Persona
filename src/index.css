@@ -218,13 +218,25 @@
     animation: fade-out 0.2s ease-out;
   }
 
-  /* Shimmer animation for skeleton loaders */
+  /* Shimmer animation for skeleton loaders - enhanced sweeping effect */
   @keyframes shimmer {
     0% {
       transform: translateX(-100%);
     }
     100% {
-      transform: translateX(100%);
+      transform: translateX(200%);
+    }
+  }
+
+  /* Fade in animation for skeleton cards */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
   }
 
