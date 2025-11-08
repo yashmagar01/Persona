@@ -24,9 +24,27 @@ import { applyTheme } from "./styles/theme";
 const queryClient = new QueryClient();
 
 const App = () => {
-  // Initialize ChatGPT-inspired theme on mount
+  // Initialize theme on mount from localStorage or default to dark
   useEffect(() => {
-    applyTheme('dark');
+    const savedTheme = localStorage.getItem('theme');
+    const root = document.documentElement;
+    
+    if (savedTheme === 'light') {
+      root.classList.remove('dark');
+      applyTheme('light');
+    } else if (savedTheme === 'dark') {
+      root.classList.add('dark');
+      applyTheme('dark');
+    } else if (savedTheme === 'system') {
+      const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      root.classList.toggle('dark', isDark);
+      applyTheme(isDark ? 'dark' : 'light');
+    } else {
+      // Default to dark
+      root.classList.add('dark');
+      applyTheme('dark');
+      localStorage.setItem('theme', 'dark');
+    }
   }, []);
 
   return (

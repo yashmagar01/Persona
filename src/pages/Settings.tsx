@@ -59,6 +59,32 @@ const Settings = () => {
     checkAuthAndLoadSettings();
   }, []);
 
+  // Apply theme on mount and when settings change
+  useEffect(() => {
+    applyThemeChange(settings.theme_preference);
+  }, [settings.theme_preference]);
+
+  const applyThemeChange = (theme: string) => {
+    const root = document.documentElement;
+    
+    if (theme === 'dark') {
+      root.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else if (theme === 'light') {
+      root.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    } else {
+      // System theme
+      const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (isDark) {
+        root.classList.add('dark');
+      } else {
+        root.classList.remove('dark');
+      }
+      localStorage.setItem('theme', 'system');
+    }
+  };
+
   const checkAuthAndLoadSettings = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -74,7 +100,14 @@ const Settings = () => {
       // Load user settings from localStorage (or database if you have a settings table)
       const savedSettings = localStorage.getItem(`settings_${session.user.id}`);
       if (savedSettings) {
-        setSettings(JSON.parse(savedSettings));
+        const parsedSettings = JSON.parse(savedSettings);
+        setSettings(parsedSettings);
+        applyThemeChange(parsedSettings.theme_preference);
+      } else {
+        // Check for global theme preference
+        const savedTheme = localStorage.getItem('theme') || 'system';
+        setSettings(prev => ({ ...prev, theme_preference: savedTheme }));
+        applyThemeChange(savedTheme);
       }
     } catch (error: any) {
       console.error('Error loading settings:', error);
@@ -92,16 +125,8 @@ const Settings = () => {
       // Save settings to localStorage (or database)
       localStorage.setItem(`settings_${user.id}`, JSON.stringify(settings));
       
-      // Apply theme change by setting HTML attribute
-      if (settings.theme_preference === 'dark') {
-        document.documentElement.classList.add('dark');
-      } else if (settings.theme_preference === 'light') {
-        document.documentElement.classList.remove('dark');
-      } else {
-        // System theme
-        const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        document.documentElement.classList.toggle('dark', isDark);
-      }
+      // Apply theme change
+      applyThemeChange(settings.theme_preference);
 
       toast.success("Settings saved successfully!");
     } catch (error: any) {
