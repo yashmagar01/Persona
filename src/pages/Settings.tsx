@@ -49,7 +49,7 @@ const Settings = () => {
   const [settings, setSettings] = useState<UserSettings>({
     notifications_enabled: true,
     email_notifications: true,
-    theme_preference: 'system',
+    theme_preference: 'dark',
     language: 'en',
   });
 
@@ -107,8 +107,8 @@ const Settings = () => {
         setSettings(parsedSettings);
         applyThemeChange(parsedSettings.theme_preference);
       } else {
-        // Check for global theme preference
-        const savedTheme = localStorage.getItem('theme') || 'system';
+        // Check for global theme preference, default to dark
+        const savedTheme = localStorage.getItem('theme') || 'dark';
         setSettings(prev => ({ ...prev, theme_preference: savedTheme }));
         applyThemeChange(savedTheme);
       }
