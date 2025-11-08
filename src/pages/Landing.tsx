@@ -53,40 +53,47 @@ const Landing = () => {
     <div className="min-h-screen bg-gradient-to-b from-background to-muted">
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Background Image with Overlay */}
+        {/* Background Image with Enhanced Dark Overlay */}
         <div 
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${heroBg})` }}
         >
-          <div className="absolute inset-0 bg-gradient-to-b from-primary/90 via-primary/70 to-background/95" />
+          {/* Dark gradient overlay for better text contrast */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/80" />
         </div>
 
-        {/* Content */}
+        {/* Content with backdrop blur */}
         <div className="relative z-10 container mx-auto px-4 py-20 text-center">
-          <div className="max-w-4xl mx-auto space-y-8">
-            <div className="inline-flex items-center gap-2 px-3 py-2 sm:px-4 rounded-full bg-background/10 backdrop-blur-sm border border-primary-foreground/20 text-primary-foreground">
-              <Sparkles className="w-4 h-4" />
+          <div className="max-w-4xl mx-auto space-y-8 backdrop-blur-sm bg-black/20 rounded-3xl p-8 md:p-12">
+            <div className="inline-flex items-center gap-2 px-3 py-2 sm:px-4 rounded-full bg-orange-500/20 backdrop-blur-md border border-orange-400/30 text-white shadow-lg">
+              <Sparkles className="w-4 h-4 text-orange-400" />
               <span className="text-xs sm:text-sm font-medium">Learn from India's Greatest Minds</span>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold leading-tight px-4">
+            <h1 
+              className="text-4xl sm:text-5xl md:text-7xl font-bold leading-tight px-4"
+              style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.7), 0 0 20px rgba(0,0,0,0.5)' }}
+            >
               <ShimmeringText 
                 text="Historical Chatboard"
                 duration={3}
                 color="#ffffff"
-                shimmerColor="#fbbf24"
+                shimmerColor="#fb923c"
                 repeat={true}
                 repeatDelay={3}
                 className="text-4xl sm:text-5xl md:text-7xl font-bold"
               />
             </h1>
 
-            <p className="text-base sm:text-xl md:text-2xl text-primary-foreground/90 max-w-2xl mx-auto px-4">
+            <p 
+              className="text-base sm:text-xl md:text-2xl text-white max-w-2xl mx-auto px-4 leading-relaxed"
+              style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.8), 0 0 10px rgba(0,0,0,0.6)' }}
+            >
               <ShimmeringText 
                 text="Connect with legendary Indian historical personalities. Learn their wisdom, understand their values, and gain insights from those who shaped our nation."
                 duration={4}
-                color="rgba(255, 255, 255, 0.9)"
-                shimmerColor="#ffffff"
+                color="#ffffff"
+                shimmerColor="#fbbf24"
                 startOnView={true}
                 once={true}
                 className="text-base sm:text-xl md:text-2xl"
@@ -98,7 +105,7 @@ const Landing = () => {
                 size="lg" 
                 variant="hero"
                 onClick={() => navigate("/auth")}
-                className="text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 w-full sm:w-auto"
+                className="text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 w-full sm:w-auto bg-orange-500 hover:bg-orange-600 text-white font-semibold shadow-xl shadow-orange-500/30 border-none"
               >
                 Start Your Journey
               </Button>
@@ -106,7 +113,7 @@ const Landing = () => {
                 size="lg" 
                 variant="outline"
                 onClick={() => navigate("/chatboard")}
-                className="text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 w-full sm:w-auto bg-background/10 backdrop-blur-sm border-primary-foreground/40 text-primary-foreground hover:bg-background/20"
+                className="text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 w-full sm:w-auto bg-white/10 backdrop-blur-md border-white/40 text-white hover:bg-white/20 hover:border-white/60 font-semibold shadow-lg"
               >
                 Explore as Guest
               </Button>
