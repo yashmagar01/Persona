@@ -86,7 +86,8 @@ export function Header() {
               ))}
               <Link to="/auth">
                 <Button
-                  className="ml-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold px-6 py-2 rounded-lg shadow-lg transition-all duration-300 hover:shadow-orange-500/50 hover:scale-105"
+                  variant="hero"
+                  className="ml-4 font-semibold px-6"
                 >
                   Get Started
                 </Button>
@@ -152,7 +153,8 @@ export function Header() {
           <div className="pt-4">
             <Link to="/auth" className="block">
               <Button
-                className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 active:from-orange-700 active:to-orange-800 text-white font-semibold py-3 rounded-lg shadow-lg transition-all duration-300 hover:shadow-orange-500/50 touch-manipulation"
+                variant="hero"
+                className="w-full font-semibold py-3 touch-manipulation"
               >
                 Get Started
               </Button>

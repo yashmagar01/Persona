@@ -105,7 +105,7 @@ const Landing = () => {
                 size="lg" 
                 variant="hero"
                 onClick={() => navigate("/auth")}
-                className="text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 w-full sm:w-auto bg-orange-500 hover:bg-orange-600 text-white font-semibold shadow-xl shadow-orange-500/30 border-none"
+                className="text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 w-full sm:w-auto font-semibold"
               >
                 Start Your Journey
               </Button>
@@ -113,7 +113,7 @@ const Landing = () => {
                 size="lg" 
                 variant="outline"
                 onClick={() => navigate("/chatboard")}
-                className="text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 w-full sm:w-auto bg-white/10 backdrop-blur-md border-white/40 text-white hover:bg-white/20 hover:border-white/60 font-semibold shadow-lg"
+                className="text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 w-full sm:w-auto bg-white/10 backdrop-blur-md border-white/40 text-white hover:bg-white/30 hover:border-white/60 font-semibold"
               >
                 Explore as Guest
               </Button>
