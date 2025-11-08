@@ -25,6 +25,46 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
+// Personality image mapping - same as Landing page
+const PERSONALITY_IMAGES: Record<string, string> = {
+  "Mahatma Gandhi": "https://blogcdn.aakash.ac.in/wordpress_media/2024/08/Mahatma-Gandhi.jpg",
+  "Chhatrapati Shivaji Maharaj": "https://www.shivajicollege.ac.in/img/chhtraptishivaji.jpg",
+  "Shivaji Maharaj": "https://www.shivajicollege.ac.in/img/chhtraptishivaji.jpg",
+  "Rani Lakshmibai": "https://images1.dnaindia.com/images/DNA-EN/900x1600/2023/7/5/1688549461607_qwee024vv81.jpg",
+  "Rani Laxmibai": "https://images1.dnaindia.com/images/DNA-EN/900x1600/2023/7/5/1688549461607_qwee024vv81.jpg",
+  "Netaji Subhas Chandra Bose": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Subhas_Chandra_Bose_NRB.jpg/800px-Subhas_Chandra_Bose_NRB.jpg",
+  "Netaji Bose": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Subhas_Chandra_Bose_NRB.jpg/800px-Subhas_Chandra_Bose_NRB.jpg",
+  "Dr. APJ Abdul Kalam": "https://cdn.britannica.com/48/222648-050-F4D0A2D8/President-of-India-A-P-J-Abdul-Kalam-2007.jpg",
+  "APJ Abdul Kalam": "https://cdn.britannica.com/48/222648-050-F4D0A2D8/President-of-India-A-P-J-Abdul-Kalam-2007.jpg",
+  "Swami Vivekananda": "https://indiwiki.com/wp-content/uploads/2025/07/86757ae05e5df302097a810ae0933ec1.jpg",
+  "Bhagat Singh": "https://resize.indiatvnews.com/en/resize/newbucket/1200_-/2017/09/bhagatsingh-1506598593.jpg",
+  "Dr. B.R. Ambedkar": "https://ambedkarinternationalcenter.org/wp-content/uploads/2020/11/DrAmbedkar1.jpg",
+  "Dr Ambedkar": "https://ambedkarinternationalcenter.org/wp-content/uploads/2020/11/DrAmbedkar1.jpg",
+  "B.R. Ambedkar": "https://ambedkarinternationalcenter.org/wp-content/uploads/2020/11/DrAmbedkar1.jpg",
+  "Rani Durgavati": "https://d18x2uyjeekruj.cloudfront.net/wp-content/uploads/2023/06/durgawati.jpg",
+  "Savitribai Phule": "https://vajiramandravi.com/current-affairs/wp-content/uploads/2025/04/savitribai_phule.webp",
+  "Chanakya": "https://miro.medium.com/1*l-uCTj8NEeZ-N47y9Kk4wQ.png",
+};
+
+// Helper function to get personality image
+const getPersonalityImage = (displayName: string, avatarUrl: string | null): string | null => {
+  // First, try to find exact match
+  if (PERSONALITY_IMAGES[displayName]) {
+    return PERSONALITY_IMAGES[displayName];
+  }
+  
+  // Try partial match (case insensitive)
+  const normalizedName = displayName.toLowerCase();
+  for (const [key, value] of Object.entries(PERSONALITY_IMAGES)) {
+    if (normalizedName.includes(key.toLowerCase()) || key.toLowerCase().includes(normalizedName)) {
+      return value;
+    }
+  }
+  
+  // Fallback to database avatar_url
+  return avatarUrl;
+};
+
 interface Message {
   id: string;
   role: "user" | "assistant" | "system";
@@ -500,39 +540,42 @@ const Chat = () => {
     <div className="h-screen bg-gradient-to-br from-background to-muted flex flex-col overflow-hidden">
       {/* Header - Fixed at Top */}
       <header className="flex-shrink-0 bg-card border-b border-border shadow-md z-30 backdrop-blur-md bg-card/95">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
+        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
+          <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
             {/* Back Button with Hover Effect */}
             <Button 
               variant="ghost" 
               size="icon" 
               onClick={() => navigate("/chatboard")}
-              className="hover:bg-accent hover:scale-105 active:scale-95 transition-all duration-200"
+              className="hover:bg-accent hover:scale-105 active:scale-95 transition-all duration-200 h-8 w-8 sm:h-10 sm:w-10 touch-manipulation flex-shrink-0"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             </Button>
             
-            <div className="flex items-center gap-3 flex-1">
+            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
               {/* Avatar with Online Status Indicator */}
-              <div className="relative w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent overflow-hidden flex-shrink-0">
-                {personality.avatar_url ? (
-                  <img 
-                    src={personality.avatar_url} 
-                    alt={personality.display_name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <User className="w-6 h-6 text-white" />
-                  </div>
-                )}
+              <div className="relative w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-primary to-accent overflow-hidden flex-shrink-0">
+                {(() => {
+                  const imageUrl = getPersonalityImage(personality.display_name, personality.avatar_url);
+                  return imageUrl ? (
+                    <img 
+                      src={imageUrl} 
+                      alt={personality.display_name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <User className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                    </div>
+                  );
+                })()}
                 {/* Green Online/Active Status Dot - More Prominent */}
-                <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-[3px] border-card shadow-lg animate-pulse" />
+                <div className="absolute bottom-0 right-0 w-3 h-3 sm:w-4 sm:h-4 bg-green-500 rounded-full border-2 sm:border-[3px] border-card shadow-lg animate-pulse" />
               </div>
               
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <h1 className="text-xl font-bold text-foreground truncate">
+                <div className="flex items-center gap-1 sm:gap-2">
+                  <h1 className="text-base sm:text-lg md:text-xl font-bold text-foreground truncate">
                     {personality.display_name}
                   </h1>
                   {/* Info Button - Opens Bio Modal */}
@@ -541,26 +584,29 @@ const Chat = () => {
                       <Button 
                         variant="ghost" 
                         size="icon"
-                        className="h-7 w-7 hover:bg-accent hover:scale-105 active:scale-95 transition-all duration-200"
+                        className="h-6 w-6 sm:h-7 sm:w-7 hover:bg-accent hover:scale-105 active:scale-95 transition-all duration-200 touch-manipulation flex-shrink-0"
                       >
-                        <Info className="h-4 w-4 text-muted-foreground" />
+                        <Info className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                    <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto mx-3 sm:mx-0">
                       <DialogHeader>
                         <DialogTitle className="flex items-center gap-3">
                           <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent overflow-hidden">
-                            {personality.avatar_url ? (
-                              <img 
-                                src={personality.avatar_url} 
-                                alt={personality.display_name}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center">
-                                <User className="w-6 h-6 text-white" />
-                              </div>
-                            )}
+                            {(() => {
+                              const imageUrl = getPersonalityImage(personality.display_name, personality.avatar_url);
+                              return imageUrl ? (
+                                <img 
+                                  src={imageUrl} 
+                                  alt={personality.display_name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <User className="w-6 h-6 text-white" />
+                                </div>
+                              );
+                            })()}
                           </div>
                           <div>
                             <div className="text-xl font-bold">{personality.display_name}</div>
@@ -599,7 +645,7 @@ const Chat = () => {
                     </DialogContent>
                   </Dialog>
                 </div>
-                <p className="text-sm text-muted-foreground">{personality.era}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">{personality.era}</p>
               </div>
 
               {/* Share Conversation Button */}
@@ -607,10 +653,10 @@ const Chat = () => {
                 variant="outline" 
                 size="sm"
                 onClick={handleShareConversation}
-                className="gap-2 hover:bg-accent hover:scale-105 active:scale-95 transition-all duration-200"
+                className="gap-1.5 sm:gap-2 hover:bg-accent hover:scale-105 active:scale-95 transition-all duration-200 h-8 sm:h-9 px-2 sm:px-3 touch-manipulation flex-shrink-0"
               >
-                <Share2 className="h-4 w-4" />
-                <span className="hidden sm:inline">Share</span>
+                <Share2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline text-xs sm:text-sm">Share</span>
               </Button>
             </div>
           </div>
@@ -626,26 +672,26 @@ const Chat = () => {
             "transition-all"
           )}
         >
-          <div className="container mx-auto px-4 py-3 max-w-4xl">
-            <div className="flex items-center justify-between gap-4">
-              <p className="text-sm text-foreground flex-1">
-                ✨ You're chatting as a <span className="font-semibold text-orange-600 dark:text-orange-400">guest</span>. Sign up to save your conversations!
+          <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-3 max-w-4xl">
+            <div className="flex items-center justify-between gap-2 sm:gap-3 md:gap-4">
+              <p className="text-xs sm:text-sm text-foreground flex-1 min-w-0">
+                ✨ You're chatting as a <span className="font-semibold text-orange-600 dark:text-orange-400">guest</span>. <span className="hidden sm:inline">Sign up to save your conversations!</span>
               </p>
               <Button 
                 size="sm" 
                 onClick={() => navigate("/auth")}
-                className="shrink-0 bg-orange-500 hover:bg-orange-600 text-white"
+                className="shrink-0 bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm h-7 sm:h-8 px-2 sm:px-3 touch-manipulation"
               >
-                Sign Up Free
+                Sign Up<span className="hidden sm:inline"> Free</span>
               </Button>
               {/* Dismiss Button with X Icon */}
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 shrink-0 hover:bg-orange-500/20 hover:text-orange-600"
+                className="h-7 w-7 sm:h-8 sm:w-8 shrink-0 hover:bg-orange-500/20 hover:text-orange-600 touch-manipulation"
                 onClick={() => setShowGuestBanner(false)}
               >
-                <X className="h-4 w-4" />
+                <X className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span className="sr-only">Dismiss</span>
               </Button>
             </div>
@@ -656,17 +702,17 @@ const Chat = () => {
       {/* Messages Area with Conversation Component */}
       <div className="flex-1 relative bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 overflow-hidden">
         <Conversation className="h-full overflow-y-auto">
-          <ConversationContent className="container mx-auto px-4 py-6 max-w-4xl">
+          <ConversationContent className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-4xl">
             {/* Personality Info Card */}
-            <Card className="mb-6 p-6 bg-card/50 backdrop-blur-sm border-border">
-              <div className="flex flex-wrap gap-2 mb-2">
+            <Card className="mb-4 sm:mb-6 p-4 sm:p-5 md:p-6 bg-card/50 backdrop-blur-sm border-border">
+              <div className="flex flex-wrap gap-1 sm:gap-1.5 md:gap-2 mb-2">
                 {valuesPillars.map((value, index) => (
-                  <Badge key={index} variant="secondary">
+                  <Badge key={index} variant="secondary" className="text-[10px] sm:text-xs">
                     {value}
                   </Badge>
                 ))}
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 I'm here to share insights about my life, values, and the era I lived in. Ask me anything!
               </p>
             </Card>
@@ -696,23 +742,23 @@ const Chat = () => {
 
                 {/* Conversation Starter Suggestions */}
                 {showSuggestions && (
-                  <div className="mt-8 space-y-4">
-                    <p className="text-sm font-medium text-muted-foreground text-center">
+                  <div className="mt-6 sm:mt-8 space-y-3 sm:space-y-4">
+                    <p className="text-xs sm:text-sm font-medium text-muted-foreground text-center px-2">
                       💬 Suggested questions to get started:
                     </p>
-                    <div className="flex flex-wrap gap-3 justify-center max-w-3xl mx-auto">
+                    <div className="flex flex-wrap gap-2 sm:gap-3 justify-center max-w-3xl mx-auto px-2">
                       {conversationStarters.map((suggestion, index) => (
                         <button
                           key={index}
                           onClick={() => handleSuggestionClick(suggestion)}
                           className={cn(
-                            "px-4 py-2.5 rounded-full",
+                            "px-3 sm:px-4 py-2 sm:py-2.5 rounded-full",
                             "border-2 border-primary/20 bg-card hover:bg-primary/5",
-                            "text-sm text-foreground",
+                            "text-xs sm:text-sm text-foreground",
                             "transition-all duration-200",
                             "hover:border-primary/40 hover:scale-105 hover:shadow-md",
                             "active:scale-95",
-                            "cursor-pointer",
+                            "cursor-pointer touch-manipulation",
                             "animate-in fade-in slide-in-from-bottom-2"
                           )}
                           style={{
@@ -737,7 +783,7 @@ const Chat = () => {
                     <Message key={message.id} from={messageRole}>
                       {messageRole === "assistant" && (
                         <MessageAvatar 
-                          src={personality.avatar_url || ""} 
+                          src={getPersonalityImage(personality.display_name, personality.avatar_url) || ""} 
                           name={personality.display_name}
                         />
                       )}
@@ -763,17 +809,20 @@ const Chat = () => {
                 {isTyping && (
                   <div className="flex items-center gap-3 py-4">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent overflow-hidden flex-shrink-0">
-                      {personality.avatar_url ? (
-                        <img 
-                          src={personality.avatar_url} 
-                          alt={personality.display_name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <User className="w-5 h-5 text-white" />
-                        </div>
-                      )}
+                      {(() => {
+                        const imageUrl = getPersonalityImage(personality.display_name, personality.avatar_url);
+                        return imageUrl ? (
+                          <img 
+                            src={imageUrl} 
+                            alt={personality.display_name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <User className="w-5 h-5 text-white" />
+                          </div>
+                        );
+                      })()}
                     </div>
                     <div className="flex flex-col gap-1">
                       <p className="text-sm text-muted-foreground italic">
@@ -796,25 +845,25 @@ const Chat = () => {
 
       {/* Grok-style Input Area - Fixed at bottom */}
       <div className="bg-background/95 backdrop-blur-xl border-t border-border/40 flex-shrink-0 sticky bottom-0 z-10">
-        <div className="container mx-auto px-4 py-4 max-w-4xl">
-          <form onSubmit={handleSendMessage} className="space-y-2">
+        <div className="container mx-auto px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 max-w-4xl">
+          <form onSubmit={handleSendMessage} className="space-y-1.5 sm:space-y-2">
             {/* Main Input Container - Grok Style */}
             <div className={cn(
-              "relative rounded-3xl bg-card border transition-all duration-200",
+              "relative rounded-2xl sm:rounded-3xl bg-card border transition-all duration-200",
               "hover:border-border",
               input.length > 0 ? "border-orange-500/50 shadow-[0_0_0_3px_rgba(249,115,22,0.1)]" : "border-border/60"
             )}>
               {/* Input Row */}
-              <div className="flex items-end gap-2 px-4 py-3">
+              <div className="flex items-end gap-1.5 sm:gap-2 px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3">
                 {/* File Upload Button - Grok Style */}
                 <button
                   type="button"
                   onClick={handleFileUpload}
-                  className="flex-shrink-0 p-2 hover:bg-accent rounded-full transition-colors disabled:opacity-50"
+                  className="flex-shrink-0 p-1.5 sm:p-2 hover:bg-accent rounded-full transition-colors disabled:opacity-50 touch-manipulation hidden sm:flex"
                   disabled={isLoading}
                   title="Attach file"
                 >
-                  <Paperclip className="w-5 h-5 text-muted-foreground" />
+                  <Paperclip className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
                 </button>
 
                 {/* Auto-resize Textarea */}
@@ -853,8 +902,8 @@ const Chat = () => {
                     disabled={isLoading}
                     className={cn(
                       "w-full bg-transparent resize-none outline-none",
-                      "text-sm placeholder:text-muted-foreground",
-                      "min-h-[24px] max-h-[96px] py-0.5",
+                      "text-xs sm:text-sm placeholder:text-muted-foreground",
+                      "min-h-[20px] sm:min-h-[24px] max-h-[80px] sm:max-h-[96px] py-0.5",
                       "disabled:opacity-50"
                     )}
                     rows={1}
@@ -864,7 +913,7 @@ const Chat = () => {
                   {/* Character Counter */}
                   {input.length > 0 && (
                     <div className={cn(
-                      "absolute -bottom-5 right-0 text-xs transition-colors",
+                      "absolute -bottom-4 sm:-bottom-5 right-0 text-[10px] sm:text-xs transition-colors",
                       input.length >= MAX_CHARS * 0.9 ? "text-orange-500 font-semibold" : "text-muted-foreground/60"
                     )}>
                       {input.length}/{MAX_CHARS}
@@ -877,7 +926,7 @@ const Chat = () => {
                   type="button"
                   onClick={handleVoiceInput}
                   className={cn(
-                    "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 disabled:opacity-50",
+                    "flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center transition-all duration-200 disabled:opacity-50 touch-manipulation hidden sm:flex",
                     isRecording 
                       ? "bg-black text-white hover:bg-black/90" 
                       : "hover:bg-accent text-muted-foreground"
@@ -887,12 +936,12 @@ const Chat = () => {
                 >
                   {isRecording ? (
                     <div className="relative flex items-center justify-center">
-                      <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
-                        <div className="w-2 h-2 rounded-full bg-white animate-pulse"></div>
+                      <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-white/20 flex items-center justify-center">
+                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-white animate-pulse"></div>
                       </div>
                     </div>
                   ) : (
-                    <Mic className="w-5 h-5" />
+                    <Mic className="w-4 h-4 sm:w-5 sm:h-5" />
                   )}
                 </button>
 
@@ -901,7 +950,7 @@ const Chat = () => {
                   type="submit"
                   disabled={isLoading || !input.trim()}
                   className={cn(
-                    "flex-shrink-0 p-2.5 rounded-full transition-all duration-200",
+                    "flex-shrink-0 p-2 sm:p-2.5 rounded-full transition-all duration-200 touch-manipulation",
                     "disabled:opacity-40 disabled:cursor-not-allowed",
                     input.trim() && !isLoading
                       ? "bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 hover:scale-105 active:scale-95"
@@ -909,9 +958,9 @@ const Chat = () => {
                   )}
                 >
                   {isLoading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
                   ) : (
-                    <Send className="w-5 h-5" />
+                    <Send className="w-4 h-4 sm:w-5 sm:h-5" />
                   )}
                 </button>
               </div>

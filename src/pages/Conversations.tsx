@@ -17,6 +17,46 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+// Personality image mapping - same as Landing page
+const PERSONALITY_IMAGES: Record<string, string> = {
+  "Mahatma Gandhi": "https://blogcdn.aakash.ac.in/wordpress_media/2024/08/Mahatma-Gandhi.jpg",
+  "Chhatrapati Shivaji Maharaj": "https://www.shivajicollege.ac.in/img/chhtraptishivaji.jpg",
+  "Shivaji Maharaj": "https://www.shivajicollege.ac.in/img/chhtraptishivaji.jpg",
+  "Rani Lakshmibai": "https://images1.dnaindia.com/images/DNA-EN/900x1600/2023/7/5/1688549461607_qwee024vv81.jpg",
+  "Rani Laxmibai": "https://images1.dnaindia.com/images/DNA-EN/900x1600/2023/7/5/1688549461607_qwee024vv81.jpg",
+  "Netaji Subhas Chandra Bose": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Subhas_Chandra_Bose_NRB.jpg/800px-Subhas_Chandra_Bose_NRB.jpg",
+  "Netaji Bose": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Subhas_Chandra_Bose_NRB.jpg/800px-Subhas_Chandra_Bose_NRB.jpg",
+  "Dr. APJ Abdul Kalam": "https://cdn.britannica.com/48/222648-050-F4D0A2D8/President-of-India-A-P-J-Abdul-Kalam-2007.jpg",
+  "APJ Abdul Kalam": "https://cdn.britannica.com/48/222648-050-F4D0A2D8/President-of-India-A-P-J-Abdul-Kalam-2007.jpg",
+  "Swami Vivekananda": "https://indiwiki.com/wp-content/uploads/2025/07/86757ae05e5df302097a810ae0933ec1.jpg",
+  "Bhagat Singh": "https://resize.indiatvnews.com/en/resize/newbucket/1200_-/2017/09/bhagatsingh-1506598593.jpg",
+  "Dr. B.R. Ambedkar": "https://ambedkarinternationalcenter.org/wp-content/uploads/2020/11/DrAmbedkar1.jpg",
+  "Dr Ambedkar": "https://ambedkarinternationalcenter.org/wp-content/uploads/2020/11/DrAmbedkar1.jpg",
+  "B.R. Ambedkar": "https://ambedkarinternationalcenter.org/wp-content/uploads/2020/11/DrAmbedkar1.jpg",
+  "Rani Durgavati": "https://d18x2uyjeekruj.cloudfront.net/wp-content/uploads/2023/06/durgawati.jpg",
+  "Savitribai Phule": "https://vajiramandravi.com/current-affairs/wp-content/uploads/2025/04/savitribai_phule.webp",
+  "Chanakya": "https://miro.medium.com/1*l-uCTj8NEeZ-N47y9Kk4wQ.png",
+};
+
+// Helper function to get personality image
+const getPersonalityImage = (displayName: string, avatarUrl: string | null): string | null => {
+  // First, try to find exact match
+  if (PERSONALITY_IMAGES[displayName]) {
+    return PERSONALITY_IMAGES[displayName];
+  }
+  
+  // Try partial match (case insensitive)
+  const normalizedName = displayName.toLowerCase();
+  for (const [key, value] of Object.entries(PERSONALITY_IMAGES)) {
+    if (normalizedName.includes(key.toLowerCase()) || key.toLowerCase().includes(normalizedName)) {
+      return value;
+    }
+  }
+  
+  // Fallback to database avatar_url
+  return avatarUrl;
+};
+
 interface Conversation {
   id: string;
   title: string;
@@ -123,17 +163,23 @@ const Conversations = () => {
                 >
                   <div className="flex items-start gap-3">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent overflow-hidden flex-shrink-0">
-                      {conversation.personalities.avatar_url ? (
-                        <img 
-                          src={conversation.personalities.avatar_url} 
-                          alt={conversation.personalities.display_name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <User className="w-6 h-6 text-white" />
-                        </div>
-                      )}
+                      {(() => {
+                        const imageUrl = getPersonalityImage(
+                          conversation.personalities.display_name, 
+                          conversation.personalities.avatar_url
+                        );
+                        return imageUrl ? (
+                          <img 
+                            src={imageUrl} 
+                            alt={conversation.personalities.display_name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <User className="w-6 h-6 text-white" />
+                          </div>
+                        );
+                      })()}
                     </div>
                     <div className="flex-1 min-w-0">
                       <CardTitle className="text-lg group-hover:text-primary transition-colors truncate">
