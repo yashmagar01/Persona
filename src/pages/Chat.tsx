@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Send, Loader2, User, Info, Share2, X, Smile, Mic, MicOff } from "lucide-react";
+import { ArrowLeft, Send, Loader2, User, Info, Share2, X, Smile, Mic, Paperclip } from "lucide-react";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { generatePersonalityResponse, isGeminiConfigured } from "@/lib/gemini";
@@ -430,6 +430,20 @@ const Chat = () => {
     }
   };
 
+  const handleFileUpload = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*,.pdf,.doc,.docx,.txt';
+    input.onchange = (e: any) => {
+      const file = e.target.files[0];
+      if (file) {
+        toast.success(`File selected: ${file.name}`);
+        // TODO: Implement file upload logic
+      }
+    };
+    input.click();
+  };
+
   const handleVoiceInput = async () => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       toast.error("Voice input is not supported in your browser");
@@ -802,6 +816,17 @@ const Chat = () => {
             )}>
               {/* Input Row */}
               <div className="flex items-end gap-2 px-4 py-3">
+                {/* File Upload Button - Grok Style */}
+                <button
+                  type="button"
+                  onClick={handleFileUpload}
+                  className="flex-shrink-0 p-2 hover:bg-accent rounded-full transition-colors disabled:opacity-50"
+                  disabled={isLoading}
+                  title="Attach file"
+                >
+                  <Paperclip className="w-5 h-5 text-muted-foreground" />
+                </button>
+
                 {/* Emoji Picker Button */}
                 <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
                   <PopoverTrigger asChild>
@@ -809,6 +834,7 @@ const Chat = () => {
                       type="button"
                       className="flex-shrink-0 p-2 hover:bg-accent rounded-full transition-colors disabled:opacity-50"
                       disabled={isLoading}
+                      title="Add emoji"
                     >
                       <Smile className="w-5 h-5 text-muted-foreground" />
                     </button>
@@ -888,25 +914,27 @@ const Chat = () => {
                   )}
                 </div>
 
-                {/* Voice Input Button */}
+                {/* Voice Input Button - Grok Style */}
                 <button
                   type="button"
                   onClick={handleVoiceInput}
                   className={cn(
-                    "flex-shrink-0 p-2 rounded-full transition-all duration-200 disabled:opacity-50",
+                    "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 disabled:opacity-50",
                     isRecording 
-                      ? "bg-green-500/10 hover:bg-green-500/20" 
-                      : "hover:bg-accent"
+                      ? "bg-black text-white hover:bg-black/90" 
+                      : "hover:bg-accent text-muted-foreground"
                   )}
                   disabled={isLoading}
+                  title={isRecording ? "Stop recording" : "Voice input"}
                 >
                   {isRecording ? (
-                    <div className="relative">
-                      <Mic className="w-5 h-5 text-green-500" />
-                      <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                    <div className="relative flex items-center justify-center">
+                      <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
+                        <div className="w-2 h-2 rounded-full bg-white animate-pulse"></div>
+                      </div>
                     </div>
                   ) : (
-                    <Mic className="w-5 h-5 text-muted-foreground" />
+                    <Mic className="w-5 h-5" />
                   )}
                 </button>
 
@@ -933,17 +961,18 @@ const Chat = () => {
 
             {/* Bottom Hints Row */}
             <div className="flex items-center justify-between px-2">
-              <p className="text-xs text-muted-foreground/60">
-                Press <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-muted/50 border border-border/50 rounded">Enter</kbd> to send, 
-                <kbd className="ml-1 px-1.5 py-0.5 text-[10px] font-mono bg-muted/50 border border-border/50 rounded">Shift+Enter</kbd> for new line
-              </p>
-              {isRecording && (
-                <p className="text-xs text-green-500 font-medium flex items-center gap-1.5">
+              {!isRecording ? (
+                <p className="text-xs text-muted-foreground/60">
+                  Press <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-muted/50 border border-border/50 rounded">Enter</kbd> to send, 
+                  <kbd className="ml-1 px-1.5 py-0.5 text-[10px] font-mono bg-muted/50 border border-border/50 rounded">Shift+Enter</kbd> for new line
+                </p>
+              ) : (
+                <p className="text-xs text-foreground font-medium flex items-center gap-2">
                   <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
                   </span>
-                  Recording...
+                  Recording... Click to stop
                 </p>
               )}
             </div>
