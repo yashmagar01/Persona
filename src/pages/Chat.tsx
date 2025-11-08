@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Send, Loader2, User } from "lucide-react";
+import { ArrowLeft, Send, Loader2, User, Info, Share2, X } from "lucide-react";
 import { toast } from "sonner";
 import { generatePersonalityResponse, isGeminiConfigured } from "@/lib/gemini";
 import { Message, MessageAvatar, MessageContent } from "@/components/ui/message";
@@ -14,6 +14,15 @@ import { Conversation, ConversationContent, ConversationEmptyState, Conversation
 import { Response } from "@/components/ui/response";
 import { MessageSkeleton } from "@/features/chat/components/MessageList/MessageSkeleton";
 import { ChatLoadingSkeleton } from "@/components/ChatLoadingSkeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 interface Message {
   id: string;
@@ -44,6 +53,8 @@ const Chat = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingMessages, setIsFetchingMessages] = useState(true);
   const [isTyping, setIsTyping] = useState(false);
+  const [showGuestBanner, setShowGuestBanner] = useState(true);
+  const [isBioModalOpen, setIsBioModalOpen] = useState(false);
   
   // Use draft store for input persistence
   const { draft, setDraft, clearDraft } = useConversationDraft(conversationId || 'temp');
@@ -315,18 +326,45 @@ const Chat = () => {
     ? personality.values_pillars.map(v => String(v))
     : [];
 
+  const handleShareConversation = () => {
+    const shareUrl = `${window.location.origin}/chat/${conversationId}`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: `Chat with ${personality.display_name}`,
+        text: `Check out my conversation with ${personality.display_name} on Persona!`,
+        url: shareUrl,
+      }).catch(() => {
+        // Fallback to clipboard if share fails
+        navigator.clipboard.writeText(shareUrl);
+        toast.success("Link copied to clipboard!");
+      });
+    } else {
+      // Fallback to clipboard
+      navigator.clipboard.writeText(shareUrl);
+      toast.success("Link copied to clipboard!");
+    }
+  };
+
   return (
-    <div className="h-screen bg-gradient-to-br from-background to-muted flex flex-col">
-      {/* Header */}
-      <header className="bg-card border-b border-border shadow-sm flex-shrink-0">
+    <div className="h-screen bg-gradient-to-br from-background to-muted flex flex-col overflow-hidden">
+      {/* Header - Fixed at Top */}
+      <header className="flex-shrink-0 bg-card border-b border-border shadow-md z-30 backdrop-blur-md bg-card/95">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/chatboard")}>
+            {/* Back Button with Hover Effect */}
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => navigate("/chatboard")}
+              className="hover:bg-accent hover:scale-105 active:scale-95 transition-all duration-200"
+            >
               <ArrowLeft className="w-5 h-5" />
             </Button>
             
             <div className="flex items-center gap-3 flex-1">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent overflow-hidden flex-shrink-0">
+              {/* Avatar with Online Status Indicator */}
+              <div className="relative w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent overflow-hidden flex-shrink-0">
                 {personality.avatar_url ? (
                   <img 
                     src={personality.avatar_url} 
@@ -338,33 +376,127 @@ const Chat = () => {
                     <User className="w-6 h-6 text-white" />
                   </div>
                 )}
+                {/* Green Online/Active Status Dot - More Prominent */}
+                <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-[3px] border-card shadow-lg animate-pulse" />
               </div>
               
-              <div className="flex-1">
-                <h1 className="text-xl font-bold text-foreground">
-                  {personality.display_name}
-                </h1>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <h1 className="text-xl font-bold text-foreground truncate">
+                    {personality.display_name}
+                  </h1>
+                  {/* Info Button - Opens Bio Modal */}
+                  <Dialog open={isBioModalOpen} onOpenChange={setIsBioModalOpen}>
+                    <DialogTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        className="h-7 w-7 hover:bg-accent hover:scale-105 active:scale-95 transition-all duration-200"
+                      >
+                        <Info className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent overflow-hidden">
+                            {personality.avatar_url ? (
+                              <img 
+                                src={personality.avatar_url} 
+                                alt={personality.display_name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <User className="w-6 h-6 text-white" />
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <div className="text-xl font-bold">{personality.display_name}</div>
+                            <div className="text-sm font-normal text-muted-foreground">{personality.era}</div>
+                          </div>
+                        </DialogTitle>
+                        <DialogDescription className="space-y-4 pt-4">
+                          <div>
+                            <h3 className="text-sm font-semibold text-foreground mb-2">Biography</h3>
+                            <p className="text-sm text-muted-foreground leading-relaxed">
+                              {personality.short_bio}
+                            </p>
+                          </div>
+                          
+                          <div>
+                            <h3 className="text-sm font-semibold text-foreground mb-2">Speaking Style</h3>
+                            <p className="text-sm text-muted-foreground leading-relaxed">
+                              {personality.speaking_style}
+                            </p>
+                          </div>
+                          
+                          {valuesPillars.length > 0 && (
+                            <div>
+                              <h3 className="text-sm font-semibold text-foreground mb-2">Values & Pillars</h3>
+                              <div className="flex flex-wrap gap-2">
+                                {valuesPillars.map((value, index) => (
+                                  <Badge key={index} variant="secondary">
+                                    {value}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </DialogDescription>
+                      </DialogHeader>
+                    </DialogContent>
+                  </Dialog>
+                </div>
                 <p className="text-sm text-muted-foreground">{personality.era}</p>
               </div>
+
+              {/* Share Conversation Button */}
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleShareConversation}
+                className="gap-2 hover:bg-accent hover:scale-105 active:scale-95 transition-all duration-200"
+              >
+                <Share2 className="h-4 w-4" />
+                <span className="hidden sm:inline">Share</span>
+              </Button>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Guest User Banner */}
-      {conversationId?.startsWith('guest-') && (
-        <div className="bg-gradient-to-r from-primary/10 to-accent/10 border-b border-border flex-shrink-0">
+      {/* Guest User Banner - Dismissible with Slide-down Animation */}
+      {conversationId?.startsWith('guest-') && showGuestBanner && (
+        <div 
+          className={cn(
+            "bg-gradient-to-r from-orange-500/10 to-amber-500/10 border-b border-orange-500/20 flex-shrink-0",
+            "animate-in slide-in-from-top duration-300",
+            "transition-all"
+          )}
+        >
           <div className="container mx-auto px-4 py-3 max-w-4xl">
             <div className="flex items-center justify-between gap-4">
-              <p className="text-sm text-foreground">
-                ✨ You're chatting as a <span className="font-semibold">guest</span>. Sign up to save your conversations!
+              <p className="text-sm text-foreground flex-1">
+                ✨ You're chatting as a <span className="font-semibold text-orange-600 dark:text-orange-400">guest</span>. Sign up to save your conversations!
               </p>
               <Button 
                 size="sm" 
                 onClick={() => navigate("/auth")}
-                className="shrink-0"
+                className="shrink-0 bg-orange-500 hover:bg-orange-600 text-white"
               >
                 Sign Up Free
+              </Button>
+              {/* Dismiss Button with X Icon */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0 hover:bg-orange-500/20 hover:text-orange-600"
+                onClick={() => setShowGuestBanner(false)}
+              >
+                <X className="h-4 w-4" />
+                <span className="sr-only">Dismiss</span>
               </Button>
             </div>
           </div>
@@ -372,8 +504,8 @@ const Chat = () => {
       )}
 
       {/* Messages Area with Conversation Component */}
-      <div className="flex-1 relative bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900">
-        <Conversation className="h-full">
+      <div className="flex-1 relative bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 overflow-hidden">
+        <Conversation className="h-full overflow-y-auto">
           <ConversationContent className="container mx-auto px-4 py-6 max-w-4xl">
             {/* Personality Info Card */}
             <Card className="mb-6 p-6 bg-card/50 backdrop-blur-sm border-border">

@@ -143,7 +143,7 @@ export default function AppShell() {
                           "w-full transition-all duration-200",
                           "hover:bg-gray-800 hover:text-white",
                           "group relative",
-                          isActive && "bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 border-l-4 border-orange-500"
+                          isActive && "bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 border-l-[6px] border-orange-500 shadow-[inset_6px_0_0_0_rgba(249,115,22,0.3)]"
                         )}
                       >
                         <MessageSquare className={cn("size-4 transition-colors", isActive && "text-orange-500")} />
@@ -163,7 +163,7 @@ export default function AppShell() {
                       "w-full transition-all duration-200",
                       "hover:bg-gray-800 hover:text-white",
                       "group relative",
-                      location.pathname === '/conversations' && "bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 border-l-4 border-orange-500"
+                      location.pathname === '/conversations' && "bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 border-l-[6px] border-orange-500 shadow-[inset_6px_0_0_0_rgba(249,115,22,0.3)]"
                     )}
                   >
                     <History className={cn("size-4 transition-colors", location.pathname === '/conversations' && "text-orange-500")} />
@@ -178,9 +178,10 @@ export default function AppShell() {
         </SidebarContent>
 
         <SidebarFooter className="mt-auto border-t border-border">
-          {/* User Profile Section (when logged in) */}
-          {user && (
-            <div className="px-3 py-3 space-y-3">
+          {/* User Profile Section - Always visible */}
+          <div className="px-3 py-3 space-y-3">
+            {user ? (
+              // Logged in state
               <div className="flex items-center gap-3">
                 <Avatar className="h-9 w-9 border-2 border-orange-500/20">
                   <AvatarImage src={user.user_metadata?.avatar_url} alt={user.email} />
@@ -205,8 +206,25 @@ export default function AppShell() {
                   <Settings className="size-4" />
                 </Button>
               </div>
-            </div>
-          )}
+            ) : (
+              // Not logged in state
+              <Button
+                variant="outline"
+                className="w-full justify-start gap-3 h-auto py-3 border-orange-500/20 hover:bg-orange-500/10 hover:border-orange-500/40 transition-all duration-200"
+                onClick={() => navigate('/auth')}
+              >
+                <Avatar className="h-9 w-9 border-2 border-orange-500/20">
+                  <AvatarFallback className="bg-orange-500/10 text-orange-500 font-semibold">
+                    <User className="size-4" />
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 text-left">
+                  <p className="text-sm font-medium text-foreground">Guest User</p>
+                  <p className="text-xs text-muted-foreground">Sign in to save chats</p>
+                </div>
+              </Button>
+            )}
+          </div>
 
           {/* Version */}
           <div className="px-3 py-2 border-t border-border">
