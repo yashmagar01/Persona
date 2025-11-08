@@ -453,14 +453,14 @@ const Auth = () => {
               </TabsContent>
             </Tabs>
 
-            <div className="mt-6 pt-4 border-t border-gray-700/50 text-center">
-              <Button
-                variant="link"
+            <div className="mt-8 pt-6 border-t border-gray-700/50 text-center">
+              <button
                 onClick={() => navigate("/chatboard")}
-                className="text-sm text-gray-400 hover:text-orange-400 transition-colors"
+                className="text-sm text-gray-400 hover:text-orange-400 transition-colors duration-200 font-normal inline-flex items-center gap-1 group"
               >
-                Continue as Guest →
-              </Button>
+                <span>Continue as Guest</span>
+                <span className="inline-block transition-transform duration-200 group-hover:translate-x-1">→</span>
+              </button>
             </div>
           </CardContent>
                 </div>
