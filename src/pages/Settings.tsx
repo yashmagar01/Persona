@@ -27,6 +27,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ArrowLeft, Save, Trash2, Shield, Bell, Palette, User, LogOut } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "@/hooks/useTranslation";
+import { setLanguage } from "@/lib/i18n";
 
 interface UserSettings {
   notifications_enabled: boolean;
@@ -41,6 +43,7 @@ const Settings = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const navigate = useNavigate();
+  const { t, language: currentLanguage } = useTranslation();
 
   // Settings state
   const [settings, setSettings] = useState<UserSettings>({
@@ -229,11 +232,11 @@ const Settings = () => {
               <Button variant="ghost" size="icon" onClick={() => navigate("/profile")}>
                 <ArrowLeft className="w-5 h-5" />
               </Button>
-              <h1 className="text-2xl font-bold text-foreground">Settings</h1>
+              <h1 className="text-2xl font-bold text-foreground">{t('settingsTitle')}</h1>
             </div>
             <Button onClick={handleSaveSettings} disabled={isSaving}>
               <Save className="w-4 h-4 mr-2" />
-              {isSaving ? "Saving..." : "Save Changes"}
+              {isSaving ? t('settingsSaved').replace(' successfully!', '...') : t('saveChanges')}
             </Button>
           </div>
         </div>
@@ -246,9 +249,9 @@ const Settings = () => {
           <CardHeader>
             <div className="flex items-center gap-2">
               <User className="w-5 h-5 text-primary" />
-              <CardTitle>Account Settings</CardTitle>
+              <CardTitle>{t('accountSettings')}</CardTitle>
             </div>
-            <CardDescription>Manage your account preferences</CardDescription>
+            <CardDescription>{t('accountSettingsDesc')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
@@ -268,13 +271,13 @@ const Settings = () => {
           <CardHeader>
             <div className="flex items-center gap-2">
               <Palette className="w-5 h-5 text-primary" />
-              <CardTitle>Appearance</CardTitle>
+              <CardTitle>{t('appearance')}</CardTitle>
             </div>
-            <CardDescription>Customize how Persona looks</CardDescription>
+            <CardDescription>{t('appearanceDesc')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="theme">Theme</Label>
+              <Label htmlFor="theme">{t('theme')}</Label>
               <Select
                 value={settings.theme_preference}
                 onValueChange={(value) => setSettings({ ...settings, theme_preference: value })}
@@ -283,18 +286,22 @@ const Settings = () => {
                   <SelectValue placeholder="Select theme" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="light">Light</SelectItem>
-                  <SelectItem value="dark">Dark</SelectItem>
-                  <SelectItem value="system">System</SelectItem>
+                  <SelectItem value="light">{t('light')}</SelectItem>
+                  <SelectItem value="dark">{t('dark')}</SelectItem>
+                  <SelectItem value="system">{t('system')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="language">Language</Label>
+              <Label htmlFor="language">{t('language')}</Label>
               <Select
                 value={settings.language}
-                onValueChange={(value) => setSettings({ ...settings, language: value })}
+                onValueChange={(value) => {
+                  setSettings({ ...settings, language: value });
+                  // Immediately apply language change
+                  setLanguage(value as 'en' | 'hi' | 'mr' | 'bn');
+                }}
               >
                 <SelectTrigger id="language">
                   <SelectValue placeholder="Select language" />

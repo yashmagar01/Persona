@@ -2,11 +2,32 @@ import { useState, useEffect } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { Menu, X, MessageSquare } from 'lucide-react';
 import { Button } from './ui/button';
+import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const location = useLocation();
+  const { t } = useTranslation();
+
+  // Check authentication status
+  useEffect(() => {
+    // Check initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthenticated(!!session);
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   // Handle scroll effect
   useEffect(() => {
@@ -35,12 +56,14 @@ export function Header() {
     };
   }, [isMobileMenuOpen]);
 
+  // Filter navigation links based on authentication status
   const navLinks = [
-    { to: '/', label: 'Home', end: true },
-    { to: '/chatboard', label: 'Chatboard' },
-    { to: '/conversations', label: 'Conversations' },
-    { to: '/profile', label: 'Profile' },
-    { to: '/auth', label: 'Sign In' },
+    { to: '/', label: t('home'), end: true },
+    { to: '/chatboard', label: t('chatboard') },
+    { to: '/conversations', label: t('conversations') },
+    { to: '/profile', label: t('profile') },
+    // Only show Sign In link if user is not authenticated
+    ...(!isAuthenticated ? [{ to: '/auth', label: t('signIn') }] : []),
   ];
 
   return (
@@ -85,14 +108,17 @@ export function Header() {
                   {link.label}
                 </NavLink>
               ))}
-              <Link to="/auth">
-                <Button
-                  variant="hero"
-                  className="ml-4 font-semibold px-6"
-                >
-                  Get Started
-                </Button>
-              </Link>
+              {/* Only show Get Started button if user is not authenticated */}
+              {!isAuthenticated && (
+                <Link to="/auth">
+                  <Button
+                    variant="hero"
+                    className="ml-4 font-semibold px-6"
+                  >
+                    {t('getStarted')}
+                  </Button>
+                </Link>
+              )}
             </div>
 
             {/* Mobile Menu Button - Visible only on mobile (<768px) */}
@@ -151,16 +177,19 @@ export function Header() {
               {link.label}
             </NavLink>
           ))}
-          <div className="pt-4">
-            <Link to="/auth" className="block">
-              <Button
-                variant="hero"
-                className="w-full font-semibold py-3 touch-manipulation"
-              >
-                Get Started
-              </Button>
-            </Link>
-          </div>
+          {/* Only show Get Started button if user is not authenticated */}
+          {!isAuthenticated && (
+            <div className="pt-4">
+              <Link to="/auth" className="block">
+                <Button
+                  variant="hero"
+                  className="w-full font-semibold py-3 touch-manipulation"
+                >
+                  {t('getStarted')}
+                </Button>
+              </Link>
+            </div>
+          )}
         </nav>
       </div>
 
