@@ -134,7 +134,7 @@ CREATE TRIGGER set_conversations_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_updated_at();
 
--- Insert sample historical personalities
+-- Insert sample historical personalities with authentic images
 INSERT INTO public.personalities (slug, display_name, era, short_bio, speaking_style, values_pillars, avatar_url) VALUES
 (
   'mahatma-gandhi',
@@ -143,7 +143,7 @@ INSERT INTO public.personalities (slug, display_name, era, short_bio, speaking_s
   'Father of the Nation, leader of Indian independence movement through non-violent civil disobedience.',
   'Speaks with wisdom, compassion, and simplicity. Uses metaphors from nature and emphasizes truth and non-violence.',
   '["Non-violence", "Truth", "Self-discipline", "Service"]'::jsonb,
-  'https://images.unsplash.com/photo-1582562172522-c57ca1086cd3?w=400&h=400&fit=crop'
+  'https://blogcdn.aakash.ac.in/wordpress_media/2024/08/Mahatma-Gandhi.jpg'
 ),
 (
   'shivaji-maharaj',
@@ -152,7 +152,7 @@ INSERT INTO public.personalities (slug, display_name, era, short_bio, speaking_s
   'Founder of the Maratha Empire, known for his military tactics, progressive administration, and respect for all religions.',
   'Speaks with valor, strategic wisdom, and respect. Uses military analogies and emphasizes courage and justice.',
   '["Courage", "Justice", "Strategic thinking", "Religious tolerance"]'::jsonb,
-  'https://images.unsplash.com/photo-1604481861064-6ff1b6e7e026?w=400&h=400&fit=crop'
+  'https://www.shivajicollege.ac.in/img/chhtraptishivaji.jpg'
 ),
 (
   'rani-lakshmibai',
@@ -161,7 +161,7 @@ INSERT INTO public.personalities (slug, display_name, era, short_bio, speaking_s
   'The Queen of Jhansi, a symbol of resistance against British colonial rule during the 1857 rebellion.',
   'Speaks with fierce determination, bravery, and eloquence. Emphasizes women empowerment and patriotism.',
   '["Bravery", "Independence", "Women empowerment", "Patriotism"]'::jsonb,
-  'https://images.unsplash.com/photo-1583623733237-4d5764e9c5f3?w=400&h=400&fit=crop'
+  'https://images1.dnaindia.com/images/DNA-EN/900x1600/2023/7/5/1688549461607_qwee024vv81.jpg'
 ),
 (
   'subhas-chandra-bose',
@@ -170,7 +170,7 @@ INSERT INTO public.personalities (slug, display_name, era, short_bio, speaking_s
   'Revolutionary freedom fighter who founded the Indian National Army and advocated for complete independence.',
   'Speaks with revolutionary fervor, determination, and strategic clarity. Uses powerful rhetoric and calls to action.',
   '["Freedom", "Action", "Sacrifice", "Unity"]'::jsonb,
-  'https://images.unsplash.com/photo-1607827448387-a67db1383b59?w=400&h=400&fit=crop'
+  'https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Subhas_Chandra_Bose_NRB.jpg/800px-Subhas_Chandra_Bose_NRB.jpg'
 ),
 (
   'dr-br-ambedkar',
@@ -179,7 +179,7 @@ INSERT INTO public.personalities (slug, display_name, era, short_bio, speaking_s
   'Principal architect of the Indian Constitution, social reformer who fought against social discrimination and championed human rights.',
   'Speaks with intellectual rigor, clarity, and passion for justice. Emphasizes education, equality, and constitutional values.',
   '["Equality", "Education", "Justice", "Constitutional rights"]'::jsonb,
-  'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=400&h=400&fit=crop'
+  'https://ambedkarinternationalcenter.org/wp-content/uploads/2020/11/DrAmbedkar1.jpg'
 ),
 (
   'swami-vivekananda',
@@ -188,5 +188,5 @@ INSERT INTO public.personalities (slug, display_name, era, short_bio, speaking_s
   'Hindu monk and spiritual leader who introduced Indian philosophies to the Western world and emphasized character building.',
   'Speaks with spiritual wisdom, inspiring energy, and philosophical depth. Uses quotes from scriptures and emphasizes self-realization.',
   '["Self-realization", "Service", "Strength", "Universal brotherhood"]'::jsonb,
-  'https://images.unsplash.com/photo-1545315003-c5ad6226c272?w=400&h=400&fit=crop'
+  'https://indiwiki.com/wp-content/uploads/2025/07/86757ae05e5df302097a810ae0933ec1.jpg'
 );
