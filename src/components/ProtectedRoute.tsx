@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { onAuthChange, getCurrentUser } from '@/lib/firebase';
 import { showAuthToast } from '@/lib/toast-notifications';
 
 interface ProtectedRouteProps {
@@ -9,7 +9,7 @@ interface ProtectedRouteProps {
 
 /**
  * Protected Route Wrapper
- * Checks authentication before allowing access to protected pages
+ * Checks Firebase authentication before allowing access to protected pages
  * Shows toast notification if user is not authenticated
  */
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
@@ -20,80 +20,36 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   useEffect(() => {
     console.log('🛡️ ProtectedRoute useEffect TRIGGERED');
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    console.log('🔒🔒🔒 ProtectedRoute MOUNTED - STARTING AUTH CHECK 🔒🔒🔒');
-    console.log('🔍 ProtectedRoute: Performing authentication check...');
     
-    try {
-      // Get the current user (more reliable than session for checking actual auth)
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
-      // Also get session for additional info
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      console.log('📊 ProtectedRoute - Full Auth State:', {
+    // Check current auth state
+    const user = getCurrentUser();
+    if (user) {
+      console.log('✅ ProtectedRoute: User already authenticated:', user.email);
+      setIsAuthenticated(true);
+      setIsChecking(false);
+      return;
+    }
+
+    // Listen for auth changes
+    const unsubscribe = onAuthChange((user) => {
+      console.log('📊 ProtectedRoute - Auth State Changed:', {
         hasUser: !!user,
         userEmail: user?.email || 'none',
-        userId: user?.id || 'none',
-        userRole: user?.role || 'none',
-        hasSession: !!session,
-        sessionExpires: session?.expires_at || 'none',
-        userError: userError?.message || 'none',
-        sessionError: sessionError?.message || 'none',
-        isAnonymous: user?.is_anonymous || false,
       });
 
-      // STRICT CHECK: User must be authenticated with a verified email
-      const isRealUser = user && 
-                        user.email && 
-                        user.email !== null && 
-                        !user.is_anonymous &&
-                        user.id;
-
-      console.log('🎯 Authentication Decision:', {
-        isRealUser,
-        reason: !user ? 'No user object' : 
-                !user.email ? 'No email' :
-                user.is_anonymous ? 'Anonymous user' :
-                !user.id ? 'No user ID' :
-                'Valid authenticated user'
-      });
-
-      if (!isRealUser) {
-        console.log('❌❌❌ ProtectedRoute: AUTHENTICATION FAILED ❌❌❌');
-        console.log('🚫 This is a GUEST USER or UNAUTHENTICATED - BLOCKING ACCESS');
-        console.log('Toast triggered!');
-        
-        // Show the auth toast FIRST
-        showAuthToast();
-        
-        // Add a small delay to allow toast to render before redirecting
-        setTimeout(() => {
-          console.log('⏱️ Delay complete, now setting auth state');
-          setIsAuthenticated(false);
-          setIsChecking(false);
-        }, 100); // 100ms delay - enough for toast to mount
-      } else {
-        console.log('✅✅✅ ProtectedRoute: USER IS AUTHENTICATED ✅✅✅');
-        console.log('✅ Granting access to protected route');
+      if (user) {
+        console.log('✅ ProtectedRoute: USER IS AUTHENTICATED');
         setIsAuthenticated(true);
-        setIsChecking(false);
-      }
-    } catch (err) {
-      console.error('❌ ProtectedRoute: Error during auth check:', err);
-      console.log('Toast triggered!');
-      showAuthToast();
-      
-      // Add delay here too
-      setTimeout(() => {
+      } else {
+        console.log('❌ ProtectedRoute: NOT AUTHENTICATED - showing toast');
+        showAuthToast();
         setIsAuthenticated(false);
-        setIsChecking(false);
-      }, 100);
-    }
-  };
+      }
+      setIsChecking(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   // Show loading state while checking
   if (isChecking) {

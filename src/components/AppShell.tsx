@@ -19,10 +19,11 @@ import {
 } from "@/components/ui/sidebar";
 import { MessageSquare, History, Settings, User, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
+import { onAuthChange, getCurrentUser } from "@/lib/firebase";
 import { showAuthToast } from "@/lib/toast-notifications";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import Footer from "@/components/Footer";
 
 /**
  * AppShell
@@ -38,18 +39,11 @@ export default function AppShell() {
 
   // Check user authentication status
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
-    };
-
-    checkUser();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+    const unsubscribe = onAuthChange((firebaseUser) => {
+      setUser(firebaseUser);
     });
 
-    return () => subscription.unsubscribe();
+    return () => unsubscribe();
   }, []);
 
   const handleConversationsClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -57,43 +51,18 @@ export default function AppShell() {
     e.stopPropagation();
     
     console.log('🔍 AppShell: Checking authentication for Conversations access...');
-    console.log('🔍 Event triggered, checking session...');
     
-    try {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      console.log('📊 Session check result:', { 
-        hasSession: !!session, 
-        sessionUser: session?.user?.email || 'none',
-        error: error?.message || 'none'
-      });
-      
-      // Check if user is authenticated (NOT guest mode)
-      if (!session || !session.user) {
-        console.log('❌ AppShell: NO AUTHENTICATION - User is in guest mode or not logged in');
-        console.log('🚫 BLOCKING navigation to conversations');
-        console.log('Toast triggered!');
-        
-        // Show the toast
-        showAuthToast();
-        
-        // Wait and redirect to auth
-        setTimeout(() => {
-          console.log('🔄 Redirecting to /auth page...');
-          navigate('/auth');
-        }, 2000);
-        
-        return; // STOP HERE - do not navigate
-      }
-      
-      console.log('✅ AppShell: User IS authenticated - allowing navigation');
-      navigate('/conversations');
-      
-    } catch (err) {
-      console.error('❌ Error checking session:', err);
+    const currentUser = getCurrentUser();
+    
+    if (!currentUser) {
+      console.log('❌ AppShell: NOT AUTHENTICATED - blocking navigation');
       showAuthToast();
       setTimeout(() => navigate('/auth'), 2000);
+      return;
     }
+    
+    console.log('✅ AppShell: User authenticated - allowing navigation');
+    navigate('/conversations');
   };
 
   return (
@@ -184,14 +153,14 @@ export default function AppShell() {
               // Logged in state
               <div className="flex items-center gap-3">
                 <Avatar className="h-9 w-9 border-2 border-orange-500/20">
-                  <AvatarImage src={user.user_metadata?.avatar_url} alt={user.email} />
+                  <AvatarImage src={user.photoURL || undefined} alt={user.email || 'User'} />
                   <AvatarFallback className="bg-orange-500/10 text-orange-500 font-semibold">
                     {user.email?.charAt(0).toUpperCase() || 'U'}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground truncate">
-                    {user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}
+                    {user.displayName || user.email?.split('@')[0] || 'User'}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">
                     {user.email}
@@ -243,7 +212,12 @@ export default function AppShell() {
         </div>
 
         {/* Routed page content */}
-        <Outlet />
+        <div className="min-h-screen flex flex-col">
+          <div className="flex-1">
+            <Outlet />
+          </div>
+          <Footer />
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );

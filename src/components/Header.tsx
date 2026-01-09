@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { Menu, X, MessageSquare } from 'lucide-react';
 import { Button } from './ui/button';
-import { supabase } from '@/integrations/supabase/client';
+import { onAuthChange } from '@/lib/firebase';
 import { useTranslation } from '@/hooks/useTranslation';
 
 export function Header() {
@@ -14,19 +14,11 @@ export function Header() {
 
   // Check authentication status
   useEffect(() => {
-    // Check initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsAuthenticated(!!session);
+    const unsubscribe = onAuthChange((user) => {
+      setIsAuthenticated(!!user);
     });
 
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(!!session);
-    });
-
-    return () => subscription.unsubscribe();
+    return () => unsubscribe();
   }, []);
 
   // Handle scroll effect

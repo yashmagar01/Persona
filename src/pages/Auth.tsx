@@ -5,10 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { supabase } from "@/integrations/supabase/client";
+import { auth, signIn, signUp, onAuthChange } from "@/lib/firebase";
+import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { toast } from "sonner";
 import { Eye, EyeOff, Loader2, MessageSquare, History, Sparkles, Shield } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import Footer from "@/components/Footer";
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -20,22 +22,13 @@ const Auth = () => {
 
   useEffect(() => {
     // Check if user is already logged in
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate("/chatboard");
-      }
-    };
-    checkUser();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session && event === "SIGNED_IN") {
+    const unsubscribe = onAuthChange((user) => {
+      if (user) {
         navigate("/chatboard");
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => unsubscribe();
   }, [navigate]);
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -54,52 +47,19 @@ const Auth = () => {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/chatboard`,
-          data: {
-            full_name: fullName,
-          }
-        }
-      });
+      const { user, error } = await signUp(email, password);
 
       if (error) {
         console.error("Sign up error:", error);
-        if (error.message.includes("already registered")) {
+        if (error.includes("already in use")) {
           toast.error("This email is already registered. Please sign in instead.");
-        } else if (error.message.includes("Email not confirmed")) {
-          toast.info("Please check your email and confirm your account before signing in.");
         } else {
-          toast.error(error.message);
+          toast.error(error);
         }
         return;
       }
 
-      if (data.user) {
-        // Check if email confirmation is required
-        if (data.user.identities && data.user.identities.length === 0) {
-          toast.info("Please check your email to confirm your account!");
-          return;
-        }
-
-        // Create profile
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .insert([
-            {
-              id: data.user.id,
-              email: data.user.email,
-              full_name: fullName || null,
-            }
-          ]);
-
-        if (profileError) {
-          console.error("Profile creation error:", profileError);
-          // Don't block if profile creation fails, user can still proceed
-        }
-
+      if (user) {
         toast.success("Account created successfully!");
         navigate("/chatboard");
       }
@@ -121,21 +81,16 @@ const Auth = () => {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { user, error } = await signIn(email, password);
 
       if (error) {
         console.error("Sign in error:", error);
-        if (error.message.includes("Invalid login credentials")) {
+        if (error.includes("invalid-credential") || error.includes("wrong-password")) {
           toast.error("Invalid email or password. Please try again.");
-        } else if (error.message.includes("Email not confirmed")) {
-          toast.error("Please confirm your email before signing in. Check your inbox!");
-        } else if (error.message.includes("User not found")) {
+        } else if (error.includes("user-not-found")) {
           toast.error("No account found with this email. Please sign up first.");
         } else {
-          toast.error(error.message);
+          toast.error(error);
         }
         return;
       }
@@ -153,20 +108,14 @@ const Auth = () => {
     setIsLoading(true);
     
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/chatboard`,
-        }
-      });
-
-      if (error) {
-        console.error("Google sign in error:", error);
-        toast.error(error.message || "Failed to sign in with Google");
-      }
-      // Don't show success message here as user will be redirected
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+      toast.success("Signed in with Google!");
+      navigate("/chatboard");
     } catch (error: any) {
-      toast.error(error.message || "An error occurred during Google sign in");
+      console.error("Google sign in error:", error);
+      toast.error(error.message || "Failed to sign in with Google");
+    } finally {
       setIsLoading(false);
     }
   };
@@ -538,6 +487,9 @@ const Auth = () => {
           </div>
         </div>
       </div>
+      
+      {/* Footer Component */}
+      <Footer />
     </div>
   );
 };
