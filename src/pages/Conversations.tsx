@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { getCurrentUser } from "@/lib/firebase";
+import { getUserConversationsWithPersonalities, deleteConversation } from "@/db/services";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, MessageSquare, Trash2, User } from "lucide-react";
@@ -83,19 +84,27 @@ const Conversations = () => {
   const fetchConversations = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("conversations")
-        .select(`
-          *,
-          personalities (
-            display_name,
-            avatar_url
-          )
-        `)
-        .order("updated_at", { ascending: false });
+      const user = getCurrentUser();
+      if (!user) {
+        toast.error("Please sign in to view conversations");
+        return;
+      }
 
-      if (error) throw error;
-      setConversations(data || []);
+      const data = await getUserConversationsWithPersonalities(user.uid);
+      
+      // Transform to expected format
+      const transformed = data.map(c => ({
+        id: c.id,
+        title: c.title || '',
+        created_at: c.created_at || '',
+        updated_at: c.updated_at || '',
+        personalities: {
+          display_name: c.personalities?.display_name || 'Unknown',
+          avatar_url: c.personalities?.avatar_url || null,
+        }
+      }));
+      
+      setConversations(transformed);
     } catch (error: any) {
       toast.error("Failed to load conversations");
       console.error(error);
@@ -106,12 +115,9 @@ const Conversations = () => {
 
   const handleDelete = async (conversationId: string) => {
     try {
-      const { error } = await supabase
-        .from("conversations")
-        .delete()
-        .eq("id", conversationId);
+      const success = await deleteConversation(conversationId);
 
-      if (error) throw error;
+      if (!success) throw new Error('Failed to delete');
 
       setConversations(prev => prev.filter(c => c.id !== conversationId));
       toast.success("Conversation deleted");

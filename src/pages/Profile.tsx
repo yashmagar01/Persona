@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { getCurrentUser, onAuthChange } from "@/lib/firebase";
+import { getProfile, createProfile, updateProfile, getUserConversations } from "@/db/services";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -42,9 +43,9 @@ const Profile = () => {
 
   const checkAuthAndLoadProfile = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const firebaseUser = getCurrentUser();
       
-      if (!session) {
+      if (!firebaseUser) {
         // Guest mode
         setIsGuest(true);
         setUser({
@@ -65,41 +66,34 @@ const Profile = () => {
 
       // Authenticated user
       setIsGuest(false);
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .single();
-
-      if (profileError) {
+      
+      // Try to get profile from database
+      let profile = await getProfile(firebaseUser.uid);
+      
+      if (!profile) {
         // Create profile if it doesn't exist
-        const { data: newProfile, error: createError } = await supabase
-          .from('profiles')
-          .insert([
-            {
-              id: session.user.id,
-              email: session.user.email,
-              full_name: session.user.user_metadata?.full_name || null,
-              avatar_url: session.user.user_metadata?.avatar_url || null,
-            }
-          ])
-          .select()
-          .single();
-
-        if (createError) {
-          console.error('Error creating profile:', createError);
-          toast.error("Failed to load profile");
-          return;
-        }
-        setUser(newProfile);
-        setEditedName(newProfile.full_name || '');
-      } else {
-        setUser(profile);
-        setEditedName(profile.full_name || '');
+        await createProfile(firebaseUser.uid, firebaseUser.email || '', firebaseUser.displayName || undefined);
+        profile = {
+          id: firebaseUser.uid,
+          email: firebaseUser.email,
+          fullName: firebaseUser.displayName,
+          avatarUrl: firebaseUser.photoURL,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
       }
+      
+      setUser({
+        id: profile.id,
+        email: profile.email || firebaseUser.email || '',
+        full_name: profile.fullName || firebaseUser.displayName || null,
+        avatar_url: profile.avatarUrl || firebaseUser.photoURL || null,
+        created_at: profile.createdAt?.toISOString() || firebaseUser.metadata.creationTime || new Date().toISOString(),
+      });
+      setEditedName(profile.fullName || firebaseUser.displayName || '');
 
       // Fetch user statistics
-      await fetchUserStats(session.user.id);
+      await fetchUserStats(firebaseUser.uid);
     } catch (error: any) {
       console.error('Error loading profile:', error);
       toast.error("Failed to load profile");
@@ -110,37 +104,21 @@ const Profile = () => {
 
   const fetchUserStats = async (userId: string) => {
     try {
-      // Get total conversations
-      const { count: conversationCount } = await supabase
-        .from('conversations')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId);
+      // Get conversations for this user
+      const conversations = await getUserConversations(userId);
+      const conversationCount = conversations.length;
+      
+      // For now, we don't have an efficient way to count messages
+      // This would require an additional service method
+      const messageCount = 0; // TODO: Add message count service
 
-      // Get conversation IDs first
-      const { data: conversations } = await supabase
-        .from('conversations')
-        .select('id')
-        .eq('user_id', userId);
-
-      const conversationIds = conversations?.map(c => c.id) || [];
-
-      // Get total messages
-      let messageCount = 0;
-      if (conversationIds.length > 0) {
-        const { count } = await supabase
-          .from('messages')
-          .select('*', { count: 'exact', head: true })
-          .in('conversation_id', conversationIds);
-        messageCount = count || 0;
-      }
-
-      // Get user creation date
-      const { data: { user } } = await supabase.auth.getUser();
+      // Get user creation date from Firebase
+      const firebaseUser = getCurrentUser();
       
       setStats({
-        totalConversations: conversationCount || 0,
+        totalConversations: conversationCount,
         totalMessages: messageCount,
-        joinedDate: user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown',
+        joinedDate: firebaseUser?.metadata.creationTime ? new Date(firebaseUser.metadata.creationTime).toLocaleDateString() : 'Unknown',
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -152,12 +130,9 @@ const Profile = () => {
     
     setIsSaving(true);
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ full_name: editedName })
-        .eq('id', user.id);
+      const success = await updateProfile(user.id, { fullName: editedName });
 
-      if (error) throw error;
+      if (!success) throw new Error('Failed to update profile');
 
       setUser({ ...user, full_name: editedName });
       setIsEditing(false);

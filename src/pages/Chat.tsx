@@ -1,16 +1,18 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { getConversationWithPersonality, getPersonalityById, getConversationMessages, createMessage, updateConversationTimestamp } from "@/db/services";
 import { useConversationDraft } from "@/features/chat/hooks/useChatStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Send, Loader2, User, Info, Share2, X, Mic, Paperclip } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ArrowLeft, Send, Loader2, User, Info, Share2, X, Mic, Paperclip, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import { generatePersonalityResponse, isGeminiConfigured } from "@/lib/gemini";
+import { generatePersonalityResponse, isGroqConfigured } from "@/lib/groq";
 import { Message, MessageAvatar, MessageContent } from "@/components/ui/message";
+import { MessageAudio } from "@/components/ui/message-audio";
 import { Conversation, ConversationContent, ConversationEmptyState, ConversationScrollButton } from "@/components/ui/conversation";
 import { Response } from "@/components/ui/response";
 import { MessageSkeleton } from "@/features/chat/components/MessageList/MessageSkeleton";
@@ -70,6 +72,7 @@ interface Message {
   role: "user" | "assistant" | "system";
   content: string;
   created_at: string;
+  audio_url?: string; // Google TTS audio URL
 }
 
 interface Conversation {
@@ -98,6 +101,7 @@ const Chat = () => {
   const [isBioModalOpen, setIsBioModalOpen] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
+  const [showRateLimitWarning, setShowRateLimitWarning] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
   // Use draft store for input persistence
@@ -146,13 +150,9 @@ const Chat = () => {
           const guestConv = JSON.parse(guestData);
           
           // Fetch personality data from database
-          const { data: personality, error: personalityError } = await supabase
-            .from("personalities")
-            .select("*")
-            .eq("id", guestConv.personality_id)
-            .single();
+          const personality = await getPersonalityById(guestConv.personality_id);
 
-          if (personalityError) throw personalityError;
+          if (!personality) throw new Error('Personality not found');
 
           // Format to match expected structure
           setConversation({
@@ -166,24 +166,10 @@ const Chat = () => {
       }
 
       // Regular authenticated user conversation
-      const { data, error } = await supabase
-        .from("conversations")
-        .select(`
-          *,
-          personalities (
-            display_name,
-            avatar_url,
-            era,
-            speaking_style,
-            short_bio,
-            values_pillars
-          )
-        `)
-        .eq("id", conversationId)
-        .single();
+      const data = await getConversationWithPersonality(conversationId!);
 
-      if (error) throw error;
-      setConversation(data);
+      if (!data) throw new Error('Conversation not found');
+      setConversation(data as any);
     } catch (error: any) {
       toast.error("Failed to load conversation");
       console.error(error);
@@ -205,13 +191,7 @@ const Chat = () => {
       }
 
       // Regular authenticated user messages
-      const { data, error } = await supabase
-        .from("messages")
-        .select("*")
-        .eq("conversation_id", conversationId)
-        .order("created_at", { ascending: true });
-
-      if (error) throw error;
+      const data = await getConversationMessages(conversationId!);
       setMessages((data || []) as Message[]);
     } catch (error: any) {
       toast.error("Failed to load messages");
@@ -233,9 +213,9 @@ const Chat = () => {
     setIsTyping(true);
 
     try {
-      // Check if Gemini is configured
-      if (!isGeminiConfigured()) {
-        toast.error("Gemini API not configured. Please add VITE_GEMINI_API_KEY to your .env file.");
+      // Check if Groq is configured
+      if (!isGroqConfigured()) {
+        toast.error("Groq API not configured. Please add VITE_GROQ_API_KEY to your .env file.");
         setIsLoading(false);
         setIsTyping(false);
         return;
@@ -247,10 +227,7 @@ const Chat = () => {
       const touchConversation = async () => {
         try {
           if (!conversationId.startsWith('guest-')) {
-            await supabase
-              .from("conversations")
-              .update({ updated_at: new Date().toISOString() })
-              .eq("id", conversationId);
+            await updateConversationTimestamp(conversationId);
           }
         } catch (err) {
           // Non-fatal: log but don't block chat flow
@@ -271,19 +248,9 @@ const Chat = () => {
         setMessages(prev => [...prev, userMsg]);
       } else {
         // Authenticated user - store in database
-        const { data: dbUserMsg, error: userError } = await supabase
-          .from("messages")
-          .insert([
-            {
-              conversation_id: conversationId,
-              role: "user",
-              content: userMessage,
-            }
-          ])
-          .select()
-          .single();
+        const dbUserMsg = await createMessage(conversationId, "user", userMessage);
 
-        if (userError) throw userError;
+        if (!dbUserMsg) throw new Error('Failed to create message');
         userMsg = dbUserMsg as Message;
         setMessages(prev => [...prev, userMsg]);
 
@@ -297,14 +264,19 @@ const Chat = () => {
         content: msg.content
       }));
 
-      // Generate AI response using Gemini with retry logic
+      // Generate AI response using Groq (Llama 3.3)
       let assistantContent: string;
+      let audioUrl: string | undefined;
+      
       try {
         assistantContent = await generatePersonalityResponse(
           conversation.personalities,
           conversationHistory,
           userMessage
         );
+
+        // TTS generation removed - Supabase edge function no longer available
+        // TTS can be re-added later with a different service if needed
       } catch (error: any) {
         // Handle rate limit errors gracefully
         if (error.message?.includes('Rate limit')) {
@@ -322,6 +294,7 @@ const Chat = () => {
           id: `msg-${Date.now()}`,
           role: "assistant",
           content: assistantContent,
+          audio_url: audioUrl,
           created_at: new Date().toISOString()
         } as Message;
 
@@ -337,19 +310,9 @@ const Chat = () => {
         }
       } else {
         // Authenticated user - store in database
-        const { data: dbAiMsg, error: insertError } = await supabase
-          .from("messages")
-          .insert([
-            {
-              conversation_id: conversationId,
-              role: "assistant",
-              content: assistantContent,
-            }
-          ])
-          .select()
-          .single();
+        const dbAiMsg = await createMessage(conversationId, "assistant", assistantContent, audioUrl);
 
-        if (insertError) throw insertError;
+        if (!dbAiMsg) throw new Error('Failed to save message');
         aiMsg = dbAiMsg as Message;
         setMessages(prev => [...prev, aiMsg]);
 
@@ -365,11 +328,14 @@ const Chat = () => {
       
       // Show specific error messages
       if (error.message?.includes('Rate limit') || error.message?.includes('high demand')) {
+        setShowRateLimitWarning(true);
         toast.error(error.message || "Rate limit exceeded. Please wait 10-15 seconds and try again.", {
           duration: 5000,
         });
+        // Auto-hide warning after 15 seconds
+        setTimeout(() => setShowRateLimitWarning(false), 15000);
       } else if (error.message?.includes('API key')) {
-        toast.error("Invalid API key. Please check your Gemini API configuration.");
+        toast.error("Invalid API key. Please check your Groq API configuration.");
       } else if (error.message?.includes('quota')) {
         toast.error("API quota exceeded. Please try again later.");
       } else {
@@ -663,6 +629,26 @@ const Chat = () => {
         </div>
       </header>
 
+      {/* Rate Limit Warning Banner */}
+      {showRateLimitWarning && (
+        <div 
+          className={cn(
+            "bg-gradient-to-r from-amber-500/15 to-orange-500/15 border-b border-amber-500/30 flex-shrink-0",
+            "animate-in slide-in-from-top duration-300"
+          )}
+        >
+          <div className="container mx-auto px-3 sm:px-4 py-2.5 sm:py-3 max-w-4xl">
+            <Alert className="bg-transparent border-0 p-0">
+              <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              <AlertDescription className="text-xs sm:text-sm text-foreground ml-2">
+                <span className="font-semibold">Rate limit reached.</span> Please wait 10-15 seconds before sending another message. 
+                <span className="hidden sm:inline"> We're using Google's free tier which has strict limits.</span>
+              </AlertDescription>
+            </Alert>
+          </div>
+        </div>
+      )}
+
       {/* Guest User Banner - Dismissible with Slide-down Animation */}
       {conversationId?.startsWith('guest-') && showGuestBanner && (
         <div 
@@ -791,6 +777,15 @@ const Chat = () => {
                         <Response className="text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none prose-p:text-current prose-headings:text-current prose-strong:font-semibold prose-strong:text-[#ececec] prose-em:italic prose-em:text-[#ececec] prose-li:text-current prose-a:text-primary prose-a:underline hover:prose-a:text-primary/80 prose-code:text-[#ececec] prose-code:bg-[#2f2f2f] prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-[#1e1e1e] prose-pre:border prose-pre:border-[rgba(77,77,77,0.2)]">
                           {message.content}
                         </Response>
+                        
+                        {/* Audio Player for Assistant Messages */}
+                        {messageRole === "assistant" && message.audio_url && (
+                          <MessageAudio 
+                            audioUrl={message.audio_url} 
+                            autoPlay={false}
+                          />
+                        )}
+                        
                         <p className="text-xs mt-1.5 opacity-80 font-normal">
                           {new Date(message.created_at).toLocaleTimeString()}
                         </p>

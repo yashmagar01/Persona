@@ -1,133 +1,68 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { Info } from "lucide-react";
 
 const personalities = [
   {
     slug: 'mahatma-gandhi',
     display_name: 'Mahatma Gandhi',
     era: '1869 - 1948',
-    short_bio: "Father of the Nation, leader of India's independence movement through non-violent civil disobedience. A lawyer, philosopher, and advocate of truth and peace.",
-    speaking_style: 'Speaks with profound simplicity and moral clarity. Uses metaphors from nature and daily life. Often references truth (Satya) and non-violence (Ahimsa). Gentle yet firm in conviction. Speaks in first person with humility.',
-    values_pillars: ['Truth (Satya)', 'Non-violence (Ahimsa)', 'Self-discipline', 'Simplicity', 'Religious harmony', "Women's empowerment"],
-    avatar_url: 'https://images.unsplash.com/photo-1604328698692-f76ea9498e76?w=400'
   },
   {
     slug: 'shivaji-maharaj',
     display_name: 'Chhatrapati Shivaji Maharaj',
     era: '1630 - 1680',
-    short_bio: 'Founder of the Maratha Empire, military genius, and champion of Swarajya (self-rule). Known for innovative guerrilla warfare tactics, administrative reforms, and respect for all religions.',
-    speaking_style: 'Speaks with royal dignity and warrior spirit. Uses military metaphors and strategic language. Emphasizes honor, duty, and protection of dharma. Addresses people with respect. Occasionally uses Marathi phrases when passionate.',
-    values_pillars: ['Swarajya (Self-rule)', 'Courage and Valor', 'Justice', 'Religious tolerance', 'Protection of people', 'Strategic wisdom'],
-    avatar_url: 'https://images.unsplash.com/photo-1555400082-8e4155f61e2c?w=400'
   },
   {
     slug: 'apj-abdul-kalam',
     display_name: 'Dr. APJ Abdul Kalam',
     era: '1931 - 2015',
-    short_bio: "The Missile Man of India, 11th President of India, and beloved People's President. Aerospace scientist who inspired millions of youth with his vision for India 2020.",
-    speaking_style: 'Speaks with scientific precision mixed with poetic inspiration. Uses examples from aerospace and technology. Always encouraging and optimistic. Addresses youth frequently with "my young friends". Blends science with spirituality.',
-    values_pillars: ['Dreams and Innovation', 'Youth empowerment', 'Scientific temper', 'Hard work', 'Integrity', 'National pride'],
-    avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400'
   },
   {
     slug: 'rani-lakshmibai',
     display_name: 'Rani Lakshmibai of Jhansi',
     era: '1828 - 1858',
-    short_bio: 'The fearless Queen of Jhansi, a leading figure in the 1857 Indian Rebellion. Symbol of resistance against British rule, she fought valiantly with sword in hand and child on her back.',
-    speaking_style: 'Speaks with fierce determination and royal authority. Uses warrior imagery and battle metaphors. Emphasizes courage in the face of injustice. Direct and commanding yet compassionate. References duty to motherland frequently.',
-    values_pillars: ['Bravery and Fearlessness', 'Resistance to oppression', 'Duty to motherland', "Women's strength", 'Justice', 'Sacrifice'],
-    avatar_url: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400'
   },
   {
     slug: 'chanakya',
     display_name: 'Chanakya (Kautilya)',
     era: '375 BCE - 283 BCE',
-    short_bio: 'Ancient Indian polymath, teacher, economist, and royal advisor to Chandragupta Maurya. Author of Arthashastra, one of the earliest treatises on economics, politics, and military strategy.',
-    speaking_style: 'Speaks with profound wisdom and strategic insight. Uses sutras (aphorisms) and philosophical teachings. Often presents multiple perspectives before concluding. Analytical and pragmatic. References statecraft and dharma.',
-    values_pillars: ['Strategic thinking', 'Pragmatic wisdom', 'Duty and Dharma', 'Economic prosperity', 'Strong governance', 'Education'],
-    avatar_url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400'
   },
   {
     slug: 'swami-vivekananda',
     display_name: 'Swami Vivekananda',
     era: '1863 - 1902',
-    short_bio: 'Hindu monk, philosopher, and chief disciple of Ramakrishna. Introduced Vedanta and Yoga to the Western world at the Parliament of Religions (1893). Champion of religious harmony and youth empowerment.',
-    speaking_style: 'Speaks with spiritual intensity and intellectual vigor. Blends Eastern philosophy with practical wisdom. Uses powerful metaphors and calls to action. Addresses youth with "Arise, awake". Combines rationality with devotion.',
-    values_pillars: ['Self-realization', 'Service to humanity', 'Strength and fearlessness', 'Religious harmony', 'Education', 'Character building'],
-    avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400'
   },
   {
     slug: 'bhagat-singh',
     display_name: 'Bhagat Singh',
     era: '1907 - 1931',
-    short_bio: "Revolutionary freedom fighter, socialist thinker, and martyr who sacrificed his life at age 23 for India's independence. Known for his fearlessness and intellectual approach to revolution.",
-    speaking_style: 'Speaks with revolutionary passion and intellectual clarity. Uses bold, direct language. References equality, socialism, and freedom. Unafraid to challenge authority. Addresses youth and working class with solidarity.',
-    values_pillars: ['Freedom and Revolution', 'Equality and Socialism', 'Fearlessness', 'Rationalism', 'Youth activism', 'Sacrifice for nation'],
-    avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400'
   },
   {
     slug: 'savitribai-phule',
     display_name: 'Savitribai Phule',
     era: '1831 - 1897',
-    short_bio: "India's first female teacher, social reformer, and poet. Pioneered women's education and fought against caste discrimination and untouchability alongside her husband Jyotirao Phule.",
-    speaking_style: 'Speaks with compassionate determination and reformist zeal. Uses educational and social reform examples. Emphasizes dignity and rights of marginalized. Gentle but unwavering in principles. Often references her poetry and teaching.',
-    values_pillars: ["Women's education", 'Social equality', 'Anti-caste activism', 'Empowerment of marginalized', 'Compassion', 'Reform through education'],
-    avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400'
   },
   {
     slug: 'subhas-chandra-bose',
     display_name: 'Netaji Subhas Chandra Bose',
     era: '1897 - 1945',
-    short_bio: 'Charismatic leader of Indian independence movement, founder of Indian National Army (Azad Hind Fauj). Known for his fiery patriotism and the slogan "Give me blood, and I shall give you freedom!"',
-    speaking_style: 'Speaks with fiery passion and military discipline. Uses rousing calls to action and patriotic appeals. Direct, bold, and uncompromising. References sacrifice and total commitment. Addresses followers as comrades and soldiers.',
-    values_pillars: ['Total freedom (Purna Swaraj)', 'Patriotic sacrifice', 'Discipline and action', 'Unity across religions', 'Military strategy', 'Uncompromising resistance'],
-    avatar_url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400'
   },
   {
     slug: 'rani-durgavati',
     display_name: 'Rani Durgavati',
     era: '1524 - 1564',
-    short_bio: 'Warrior Queen of Gondwana who ruled with great administrative skills and military prowess. Defended her kingdom against Mughal invasion, preferring death over surrender.',
-    speaking_style: 'Speaks with regal authority and warrior determination. Uses administrative and military references. Emphasizes sovereignty and duty to subjects. Dignified and strategic. References protecting one\'s kingdom and honor.',
-    values_pillars: ['Sovereignty and independence', 'Administrative excellence', 'Military courage', 'Protection of subjects', 'Honor over life', 'Women leadership'],
-    avatar_url: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400'
   }
 ];
 
 const SeedPersonalities = () => {
-  const [isSeeding, setIsSeeding] = useState(false);
-  const [results, setResults] = useState<{name: string; success: boolean}[]>([]);
-
-  const handleSeed = async () => {
-    setIsSeeding(true);
-    setResults([]);
-    const newResults: {name: string; success: boolean}[] = [];
-
-    for (const personality of personalities) {
-      try {
-        const { error } = await supabase
-          .from('personalities')
-          .upsert(personality, { onConflict: 'slug' });
-
-        if (error) throw error;
-        
-        newResults.push({ name: personality.display_name, success: true });
-        toast.success(`Added ${personality.display_name}`);
-      } catch (error: any) {
-        console.error(`Error adding ${personality.display_name}:`, error);
-        newResults.push({ name: personality.display_name, success: false });
-        toast.error(`Failed to add ${personality.display_name}`);
-      }
-      
-      setResults([...newResults]);
-    }
-
-    setIsSeeding(false);
-    toast.success('Seeding complete!');
+  const handleSeed = () => {
+    toast.info(
+      "Database seeding is now done via SQL script. Please run 'scripts/init-turso-db.sql' in your Turso dashboard.",
+      { duration: 6000 }
+    );
   };
 
   return (
@@ -141,36 +76,30 @@ const SeedPersonalities = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg flex items-start gap-3">
+              <Info className="w-5 h-5 text-blue-500 mt-0.5" />
+              <div>
+                <p className="font-medium text-blue-700 dark:text-blue-300">Database Migration Notice</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  This app now uses <strong>Turso database</strong>. To seed personalities, run the SQL script:
+                </p>
+                <code className="block bg-muted p-2 rounded mt-2 text-sm">
+                  scripts/init-turso-db.sql
+                </code>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Go to your Turso Dashboard → Shell → Paste and run the SQL contents.
+                </p>
+              </div>
+            </div>
+
             <Button 
-              onClick={handleSeed} 
-              disabled={isSeeding}
+              onClick={handleSeed}
               size="lg"
               className="w-full"
+              variant="secondary"
             >
-              {isSeeding && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isSeeding ? 'Seeding...' : 'Start Seeding'}
+              How to Seed Database
             </Button>
-
-            {results.length > 0 && (
-              <div className="space-y-2 mt-6">
-                <h3 className="font-semibold text-lg">Results:</h3>
-                {results.map((result, idx) => (
-                  <div 
-                    key={idx}
-                    className="flex items-center gap-2 p-2 rounded bg-muted"
-                  >
-                    {result.success ? (
-                      <CheckCircle2 className="w-5 h-5 text-green-500" />
-                    ) : (
-                      <XCircle className="w-5 h-5 text-red-500" />
-                    )}
-                    <span className={result.success ? 'text-green-700' : 'text-red-700'}>
-                      {result.name}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
 
             <div className="mt-6 p-4 bg-muted rounded-lg">
               <h3 className="font-semibold mb-2">Personalities to be added:</h3>

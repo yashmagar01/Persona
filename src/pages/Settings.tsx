@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { getCurrentUser, signOut as firebaseSignOut } from "@/lib/firebase";
+import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -90,18 +92,18 @@ const Settings = () => {
 
   const checkAuthAndLoadSettings = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const firebaseUser = getCurrentUser();
       
-      if (!session) {
+      if (!firebaseUser) {
         toast.error("Please sign in to access settings");
         navigate("/auth");
         return;
       }
 
-      setUser(session.user);
+      setUser(firebaseUser);
 
-      // Load user settings from localStorage (or database if you have a settings table)
-      const savedSettings = localStorage.getItem(`settings_${session.user.id}`);
+      // Load user settings from localStorage
+      const savedSettings = localStorage.getItem(`settings_${firebaseUser.uid}`);
       if (savedSettings) {
         const parsedSettings = JSON.parse(savedSettings);
         setSettings(parsedSettings);
@@ -125,8 +127,8 @@ const Settings = () => {
 
     setIsSaving(true);
     try {
-      // Save settings to localStorage (or database)
-      localStorage.setItem(`settings_${user.id}`, JSON.stringify(settings));
+      // Save settings to localStorage
+      localStorage.setItem(`settings_${user.uid}`, JSON.stringify(settings));
       
       // Apply theme change
       applyThemeChange(settings.theme_preference);
@@ -152,11 +154,18 @@ const Settings = () => {
     }
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword
-      });
+      const user = auth.currentUser;
+      if (!user || !user.email) {
+        toast.error("Please sign in again to change password");
+        return;
+      }
 
-      if (error) throw error;
+      // Re-authenticate first
+      const credential = EmailAuthProvider.credential(user.email, currentPassword);
+      await reauthenticateWithCredential(user, credential);
+
+      // Then update password
+      await updatePassword(user, newPassword);
 
       toast.success("Password updated successfully!");
       setCurrentPassword("");
@@ -164,7 +173,11 @@ const Settings = () => {
       setConfirmPassword("");
     } catch (error: any) {
       console.error('Error changing password:', error);
-      toast.error(error.message || "Failed to change password");
+      if (error.code === 'auth/wrong-password') {
+        toast.error("Current password is incorrect");
+      } else {
+        toast.error(error.message || "Failed to change password");
+      }
     }
   };
 
@@ -173,27 +186,11 @@ const Settings = () => {
 
     setIsDeleting(true);
     try {
-      // Delete user's conversations and messages
-      const { error: deleteConversationsError } = await supabase
-        .from('conversations')
-        .delete()
-        .eq('user_id', user.id);
-
-      if (deleteConversationsError) throw deleteConversationsError;
-
-      // Delete user's profile
-      const { error: deleteProfileError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', user.id);
-
-      if (deleteProfileError) throw deleteProfileError;
-
-      // Delete auth user (requires admin privileges or RPC function)
-      // For now, just sign out
-      await supabase.auth.signOut();
+      // Note: Full account deletion requires Firebase Admin SDK
+      // For now, just sign out and notify user
+      await firebaseSignOut();
       
-      toast.success("Account deleted successfully");
+      toast.success("Account signed out. Contact support to fully delete your account.");
       navigate("/");
     } catch (error: any) {
       console.error('Error deleting account:', error);
@@ -205,7 +202,7 @@ const Settings = () => {
 
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut();
+      await firebaseSignOut();
       toast.success("Signed out successfully");
       navigate("/");
     } catch (error: any) {

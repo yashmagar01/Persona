@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { onAuthChange, getCurrentUser, signOut } from "@/lib/firebase";
+import { getAllPersonalities, createConversation } from "@/db/services";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -127,15 +128,13 @@ const Chatboard = () => {
   }, []);
 
   useEffect(() => {
-    checkUser();
+    const unsubscribe = onAuthChange((firebaseUser) => {
+      setUser(firebaseUser);
+    });
     fetchPersonalities();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
     return () => {
-      subscription.unsubscribe();
+      unsubscribe();
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
@@ -146,23 +145,15 @@ const Chatboard = () => {
     debouncedSearch(searchQuery);
   }, [searchQuery, debouncedSearch]);
 
-  const checkUser = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    setUser(session?.user ?? null);
-  };
+
 
   const fetchPersonalities = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("personalities")
-        .select("*")
-        .order("display_name");
-
-      if (error) throw error;
+      const data = await getAllPersonalities();
       
       // Transform data to match our interface
-      const transformedData = (data || []).map(p => ({
+      const transformedData = data.map(p => ({
         ...p,
         values_pillars: Array.isArray(p.values_pillars) 
           ? p.values_pillars.map(v => String(v))
@@ -244,7 +235,7 @@ const Chatboard = () => {
   };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await signOut();
     toast.success("Signed out successfully");
     navigate("/");
   };
@@ -271,19 +262,9 @@ const Chatboard = () => {
     }
 
     try {
-      const { data, error } = await supabase
-        .from("conversations")
-        .insert([
-          {
-            user_id: user.id,
-            personality_id: personalityId,
-            title: `Chat with ${displayName}`,
-          }
-        ])
-        .select()
-        .single();
+      const data = await createConversation(user.uid, personalityId, `Chat with ${displayName}`);
 
-      if (error) throw error;
+      if (!data) throw new Error('Failed to create conversation');
 
       navigate(`/chat/${data.id}`);
     } catch (error: any) {
@@ -313,16 +294,12 @@ const Chatboard = () => {
                 e.preventDefault();
                 console.log('🔍 Chatboard: Checking auth for My Conversations...');
                 
-                const { data: { session } } = await supabase.auth.getSession();
+                const currentUser = getCurrentUser();
                 
-                if (!session) {
+                if (!currentUser) {
                   console.log('❌ Chatboard: No session - BLOCKING navigation');
-                  console.log('Toast triggered!');
                   showAuthToast();
-                  setTimeout(() => {
-                    console.log('🔄 Chatboard: Redirecting to auth...');
-                    navigate("/auth");
-                  }, 2000);
+                  setTimeout(() => navigate("/auth"), 2000);
                 } else {
                   console.log('✅ Chatboard: User authenticated - navigating');
                   navigate("/conversations");
